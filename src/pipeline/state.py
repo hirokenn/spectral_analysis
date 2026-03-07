@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional, Union
+from typing import Union
+
 
 @dataclass
 class BaseState:
@@ -9,6 +10,7 @@ class BaseState:
     Train / Predict 共通の状態。
     入出力をここに乗せていく。
     """
+
     pass
 
 
