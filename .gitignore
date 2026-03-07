@@ -1,0 +1,100 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.eggs
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.env
+
+# catboost
+catboost_info/
+
+# Ignore instructions directory in .github
+.github/instructions/
+.venv
+env.bak/
+venv.bak/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+*.ipynb_metadata
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+
+# Data files
+*.csv
+*.dat
+*.pkl
+*.npy
+*.npz
+*.h5
+*.hdf5
+*.mat
+!models/*.json  # Keep models JSON files
+!config/*.json  # Keep config JSON files
+
+# Model files
+*.pth
+*.pt
+*.bin
+*.onnx
+*.tflite
+*.pb
+
+# Logs and temporary files
+logs/
+*.log
+tmp/
+temp/
+.DS_Store
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.cover
+*~$*
+
+# MLflow
+mlruns/
+mlflow/
+mlflow.db
+*.db
+
+
+# Data
+data/
+!data/.gitkeep
+
+# Environment variables
+.env*
+!.env.example
+# Notebook
+/notebooks/
