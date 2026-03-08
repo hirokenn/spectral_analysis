@@ -12,6 +12,22 @@ class PreprocessingPipeline:
 
     steps: list[BasePreprocessor] = field(default_factory=list)
 
+    def __rshift__(
+        self, other: BasePreprocessor | "PreprocessingPipeline"
+    ) -> "PreprocessingPipeline":
+        """前処理を `>>` で連結した新しいパイプラインを返す。"""
+        if isinstance(other, PreprocessingPipeline):
+            return PreprocessingPipeline([*self.steps, *other.steps])
+        return PreprocessingPipeline([*self.steps, other])
+
+    def __rrshift__(
+        self, other: BasePreprocessor | "PreprocessingPipeline"
+    ) -> "PreprocessingPipeline":
+        """左辺が前処理の場合の `>>` を受ける。"""
+        if isinstance(other, PreprocessingPipeline):
+            return PreprocessingPipeline([*other.steps, *self.steps])
+        return PreprocessingPipeline([other, *self.steps])
+
     def fit(self, ds: Dataset) -> None:
         """各前処理を順に学習する。"""
         current = ds

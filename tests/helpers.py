@@ -53,7 +53,7 @@ def make_recipe(recipe_name: str = "dummy_recipe") -> Recipe:
     """Identity 前処理を使うテスト用 recipe を返す。"""
     return Recipe(
         name=recipe_name,
-        preprocessor_factory=lambda: PreprocessingPipeline([IdentityPreprocessor()]),
+        preprocessor_factory=lambda: PreprocessingPipeline() >> IdentityPreprocessor(),
         model_name="dummy_model",
     )
 

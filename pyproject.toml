@@ -16,6 +16,9 @@ dependencies = [
     "tabpfn>=6.4.1",
 ]
 
+[project.scripts]
+spectral-analysis = "src.cli:main"
+
 [dependency-groups]
 dev = [
     "black>=26.1.0",

@@ -7,7 +7,7 @@ from src.recipes.base import Recipe
 
 def make_identity_pipeline() -> PreprocessingPipeline:
     """既定の no-op 前処理パイプラインを返す。"""
-    return PreprocessingPipeline([IdentityPreprocessor()])
+    return PreprocessingPipeline() >> IdentityPreprocessor()
 
 
 RECIPES: dict[str, Recipe] = {
