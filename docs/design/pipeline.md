@@ -1,121 +1,141 @@
 # Pipeline ガイド
 
-## 基本的なアイデア
+## 基本的な考え方
 
-Pipelineは、機械学習の処理を複数のステップに分割し、順番に実行するためのフレームワークです。
+このプロジェクトでは、処理を小さな `Step` に分け、それらを `>>` で連結して `Pipeline` を作ります。  
+各 Step は `State` を受け取り、必要な情報を更新して次の Step に渡します。
 
-- **ステップ（Step）**: 各処理単位（データ読み込み、特徴量生成、モデル学習など）
-- **状態（State）**: ステップ間でデータを受け渡すためのオブジェクト
-- **パイプライン（Pipeline）**: 複数のステップを順番に実行するコンテナ
+- `BaseStep`: 各処理単位
+- `State`: Step 間で受け渡す状態
+- `Pipeline`: Step を順番に実行するコンテナ
 
-## 基本的な使い方
+## Step の作り方
 
-### 1. ステップの作成
-
-ステップは `BaseStep` を継承し、`execute()` メソッドを実装します。
+Step は `BaseStep` を継承し、`execute()` を実装します。
 
 ```python
-from src.pipelines.pipeline import BaseStep
-from src.pipelines.state import TrainState, StateLike
+from typing import Any
+
+from src.pipeline.pipeline import BaseStep
+from src.pipeline.state import StateLike, TrainState
+
 
 class MyStep(BaseStep):
-    def execute(self, state: StateLike, **kwargs) -> StateLike:
-        # stateを検証（オプション）
-        self._require_state(state, require_attrs=['df_feature'])
-        
-        # 処理を実行
-        # stateを更新
-        state.df_feature = process_data(state.df_feature)
-        
+    def execute(self, state: StateLike, **kwargs: Any) -> StateLike:
+        self._require_state(state, allowed_types=(TrainState,))
         return state
 ```
 
-### 2. パイプラインの作成と実行
+`_require_state()` を使うと、Step の入口で型や必須属性を検証できます。
 
-ステップを `>>` 演算子で連結してパイプラインを作成し、`run()` で実行します。
+## パイプラインの組み立て
+
+パイプラインは `>>` で結合します。
 
 ```python
-from src.pipelines.pipeline import Pipeline
-from src.pipelines.state import TrainState
+from src.pipeline.state import TrainState
+from src.pipeline.steps.run_step import MlflowEndRun, MlflowStartRun
 
-# ステップを作成
-step1 = LoadDataStep()
-step2 = BuildFeatureStep()
-step3 = TrainModelStep()
+pipeline = MlflowStartRun() >> MyStep() >> MlflowEndRun()
 
-# パイプラインを作成
-pipeline = step1 >> step2 >> step3
-
-# または
-pipeline = Pipeline([step1, step2, step3])
-
-# 実行
-initial_state = TrainState()
-result_state = pipeline.run(initial_state, verbose=True)
+state = TrainState()
+result = pipeline.run(state)
 ```
 
-### 3. 条件分岐
+`Pipeline([...])` でも作れますが、このプロジェクトでは可読性のため `>>` を基本とします。
 
-`BranchStep` を使用して条件に応じた分岐処理が可能です。
+## このプロジェクトの主要パイプライン
+
+### CV パイプライン
+
+CV 用パイプラインは `src.pipeline.factory.build_cv_pipeline()` で構築します。
 
 ```python
-from src.pipelines.pipeline import BranchStep
+from src.model.model_builder import ModelBuilder
+from src.pipeline import build_cv_pipeline
+from src.pipeline.state import TrainState
+from src.recipes.builder import RecipeBuilder
 
-def should_use_cache(state: StateLike) -> bool:
-    return state.feature_version is not None
-
-# 条件分岐パイプライン
-branch = BranchStep(
-    condition_fn=should_use_cache,
-    true_steps=LoadCacheStep(),  # キャッシュがある場合
-    false_steps=BuildFeatureStep() >> SaveCacheStep()  # キャッシュがない場合
+pipeline = build_cv_pipeline(
+    recipe_builder=RecipeBuilder(),
+    model_builder=ModelBuilder(),
+    recipe_name="base_pls",
 )
 
-pipeline = LoadDataStep() >> branch >> TrainModelStep()
+state = TrainState(dataset=train_ds)
+result = pipeline.run(state)
 ```
 
-### 4. 状態（State）の検証
+実行される Step は次の通りです。
 
-ステップ内で `_require_state()` を使用して、必要な属性が存在するか検証できます。
+- `MlflowStartRun`
+- `TrainCV`
+- `EvaluateOOF`
+- `PlotOOF` (`plot_oof=True` のとき)
+- `MlflowEndRun`
+
+このパイプラインは以下を行います。
+
+- recipe に従って各 fold で前処理とモデルを再構築
+- OOF 予測を作成
+- RMSE を `state.metrics` に保存
+- 相関プロットや残差ヒストグラムを MLflow に HTML 保存
+
+### 提出用パイプライン
+
+提出用パイプラインは `src.pipeline.factory.build_submission_pipeline()` で構築します。
 
 ```python
-def execute(self, state: StateLike, **kwargs) -> StateLike:
-    # 特定の型のみ許可
-    self._require_state(state, allowed_types=(TrainState,))
-    
-    # 特定の属性が存在することを確認
-    self._require_state(state, require_attrs=['df_feature', 'df_label'])
-    
-    # 特定の属性がNoneでないことを確認
-    self._require_state(state, require_non_none=['df_feature'])
-    
-    # 処理を実行
-    return state
+from src.model.model_builder import ModelBuilder
+from src.pipeline import build_submission_pipeline
+from src.pipeline.state import TrainState
+from src.recipes.builder import RecipeBuilder
+
+pipeline = build_submission_pipeline(
+    recipe_builder=RecipeBuilder(),
+    model_builder=ModelBuilder(),
+    recipe_name="base_pls",
+)
+
+state = TrainState(train_dataset=train_ds, test_dataset=test_ds)
+result = pipeline.run(state)
+pred = result.test_predictions
 ```
 
-## 主なクラス
+実行される Step は次の通りです。
 
-- **`Pipeline`**: ステップの実行コンテナ
-- **`BaseStep`**: すべてのステップの基底クラス
-- **`BranchStep`**: 条件分岐を行うステップ
-- **`TrainState`**: 学習用の状態オブジェクト
-- **`PredictState`**: 予測用の状態オブジェクト
+- `MlflowStartRun`
+- `TrainFull`
+- `PredictTest`
+- `MlflowEndRun`
+
+このパイプラインは以下を行います。
+
+- 全学習データで前処理器とモデルを学習
+- 学習済み前処理器を test データへ適用
+- `state.test_predictions` に予測値を保存
 
 ## 実行ログ
 
-`verbose=True` を指定すると、各ステップの実行時間とログが出力されます。
+`Pipeline.verbose` が `True` の場合、各 Step の実行時間とログが出力されます。
 
 ```python
-pipeline.run(state, verbose=True)
+pipeline = build_cv_pipeline(
+    recipe_builder=RecipeBuilder(),
+    model_builder=ModelBuilder(),
+    recipe_name="base_pls",
+    verbose=True,
+)
 ```
 
 出力例:
-```
+
+```text
 パイプラインを実行中...
 --------------------------------------------------------------------------------
-[1] LoadDataStep: 0.123s
-[2] BuildFeatureStep: 0.456s
-[3] TrainModelStep: 1.234s
+[1] MlflowStartRun: 0.010s - run_id=...
+[2] TrainCV: 0.254s - recipe=base_pls, splits=20, covered=1322/1322
+[3] EvaluateOOF: 0.002s - overall_rmse=..., group_rmse_mean=...
 --------------------------------------------------------------------------------
-総実行時間: 1.813s
+総実行時間: 0.310s
 ```

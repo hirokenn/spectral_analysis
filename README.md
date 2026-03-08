@@ -12,6 +12,17 @@
 - `docs/data_info.md`
 - `docs/domain_knowledge.md`
 
+## ドキュメント一覧
+
+プロジェクト全体像と詳細設計は以下のドキュメントを参照してください。
+
+- `docs/architecture.md`: フォルダ構成と全体アーキテクチャ
+- `docs/design/recipe.md`: recipe 設計
+- `docs/design/preprocess.md`: 前処理設計
+- `docs/design/pipeline.md`: pipeline 設計
+- `docs/data_info.md`: データの基本情報
+- `docs/knowledge.md`: 背景知識
+
 ## このコンペで難しい点・注意点
 
 - `train.csv` と `test.csv` で出現する樹種が非重複であり、未知樹種への汎化性能が重要です。
@@ -61,3 +72,48 @@ uv run black .
 uv run ruff check src
 uv run pytest
 ```
+
+## CLI 実行方法
+
+CLI は `uv run spectral-analysis` から実行できます。
+
+### CV 学習と評価
+
+```bash
+uv run spectral-analysis cv \
+  --train-path data/train.csv \
+  --recipe-name base_pls \
+  --params-path params.json
+```
+
+必要に応じて以下も指定できます。
+
+- `--tracking-uri`
+- `--experiment-name`
+- `--run-name`
+- `--plot-oof` / `--no-plot-oof`
+- `--verbose`
+
+実行後は `run_id`、`overall_rmse`、`group_rmse_mean` が JSON で標準出力されます。
+
+### 提出用予測の作成
+
+```bash
+uv run spectral-analysis submission \
+  --train-path data/train.csv \
+  --test-path data/test.csv \
+  --output-path outputs/submission.csv \
+  --recipe-name base_pls \
+  --params-path params.json
+```
+
+出力 CSV は次の形式で保存されます。
+
+- `sample number`
+- `含水率`
+
+### 関連ドキュメント
+
+- `docs/design/recipe.md`
+- `docs/design/preprocess.md`
+- `docs/design/pipeline.md`
