@@ -1,0 +1,9 @@
+{
+    "base_pls": {
+        "build_type": "pls",
+        "params": {
+            "n_components": 8,
+            "scale": true
+        }
+    }
+}
