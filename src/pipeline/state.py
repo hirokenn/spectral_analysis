@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Union
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, Union
 
 import numpy as np
 
@@ -29,6 +29,7 @@ class BaseState:
     model_uri: str | None = None
     run_id: str | None = None
     test_predictions: np.ndarray | None = None
+    metrics: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

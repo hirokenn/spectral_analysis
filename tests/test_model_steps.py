@@ -4,7 +4,7 @@ import numpy as np
 
 from src.model.base_model import ModelType
 from src.pipeline.state import TrainState
-from src.pipeline.steps.model_steps import PredictTest, TrainCV, TrainFull
+from src.pipeline.steps.model_steps import EvaluateOOF, PredictTest, TrainCV, TrainFull
 from tests.helpers import (
     DummyMeanModel,
     DummyModelBuilder,
@@ -115,3 +115,22 @@ def test_predict_test_updates_predictions() -> None:
         predicted.test_predictions,
         np.array([2.0, 2.0], dtype=np.float32),
     )
+
+
+def test_evaluate_oof_updates_rmse_metrics() -> None:
+    ds = make_dataset(
+        X=np.array([[0.0], [1.0], [2.0], [3.0]]),
+        y=np.array([1.0, 2.0, 3.0, 4.0]),
+        groups=np.array([1, 1, 2, 2]),
+        sample_id=np.array([1, 2, 3, 4]),
+    )
+    state = TrainState(dataset=ds, oof_predictions=np.array([1.0, 1.0, 4.0, 4.0]))
+    step = EvaluateOOF()
+
+    updated = step.execute(state)
+
+    assert "overall_rmse" in updated.metrics
+    assert "group_rmse_mean" in updated.metrics
+    assert "group_rmse_by_group" in updated.metrics
+    np.testing.assert_allclose(updated.metrics["overall_rmse"], np.sqrt(0.5))
+    np.testing.assert_allclose(updated.metrics["group_rmse_mean"], np.sqrt(0.5))

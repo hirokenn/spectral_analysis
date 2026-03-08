@@ -4,6 +4,7 @@ from typing import Any, Iterable, cast
 
 from src.data.dataset import Dataset
 from src.data.group_cv import GroupCV
+from src.model.eval import OOFEvaluator
 from src.model.model_builder import ModelBuilder
 from src.model.trainers.cv_trainer import CVTrainer
 from src.model.trainers.full_trainer import FullTrainer
@@ -129,3 +130,40 @@ class PredictTest(BaseStep):
         if state.dataset is not None:
             return state.dataset
         raise ValueError("test_dataset も dataset も設定されていません")
+
+
+class EvaluateOOF(BaseStep):
+    """OOF 予測を評価し、TrainState に RMSE 指標を保存する。"""
+
+    def __init__(self, evaluator: OOFEvaluator | None = None) -> None:
+        super().__init__()
+        self.evaluator = evaluator or OOFEvaluator()
+
+    def execute(self, state: StateLike, **kwargs: Any) -> StateLike:
+        """全体 RMSE とグループ別 RMSE 平均を計算して state に反映する。"""
+        self._require_state(
+            state,
+            allowed_types=(TrainState,),
+            require_non_none=["oof_predictions"],
+        )
+        train_state = cast(TrainState, state)
+        dataset = self._resolve_train_dataset(train_state)
+        assert train_state.oof_predictions is not None
+
+        result = self.evaluator.evaluate(train_state.oof_predictions, dataset)
+        train_state.metrics["overall_rmse"] = result.overall_rmse
+        train_state.metrics["group_rmse_mean"] = result.group_rmse_mean
+        train_state.metrics["group_rmse_by_group"] = result.group_rmse_by_group
+        self.log_out = (
+            f"overall_rmse={result.overall_rmse:.6f}, "
+            f"group_rmse_mean={result.group_rmse_mean:.6f}"
+        )
+        return train_state
+
+    def _resolve_train_dataset(self, state: TrainState) -> Dataset:
+        """評価対象の学習データセットを解決する。"""
+        if state.train_dataset is not None:
+            return state.train_dataset
+        if state.dataset is not None:
+            return state.dataset
+        raise ValueError("train_dataset も dataset も設定されていません")
