@@ -13,6 +13,10 @@ from src.pipeline.state import TrainState
 from src.recipes.default_recipes import RECIPES
 from src.recipes.builder import RecipeBuilder
 
+DEFAULT_TRAIN_PATH = "data/train.csv"
+DEFAULT_TEST_PATH = "data/test.csv"
+DEFAULT_SUBMISSION_DIR = "submission"
+
 
 def build_parser() -> argparse.ArgumentParser:
     """CLI パーサを構築する。"""
@@ -21,12 +25,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     cv_parser = subparsers.add_parser("cv", help="CV 学習と評価を実行する")
     _add_common_args(cv_parser)
-    cv_parser.add_argument("--train-path", required=True, help="学習用 CSV パス")
     cv_parser.add_argument(
-        "--plot-oof",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-        help="OOF プロットを MLflow に保存するか",
+        "--train-path",
+        default=DEFAULT_TRAIN_PATH,
+        help="学習用 CSV パス",
     )
     cv_parser.set_defaults(func=run_cv)
 
@@ -36,14 +38,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_common_args(submission_parser)
     submission_parser.add_argument(
-        "--train-path", required=True, help="学習用 CSV パス"
+        "--train-path",
+        default=DEFAULT_TRAIN_PATH,
+        help="学習用 CSV パス",
     )
     submission_parser.add_argument(
-        "--test-path", required=True, help="テスト用 CSV パス"
+        "--test-path",
+        default=DEFAULT_TEST_PATH,
+        help="テスト用 CSV パス",
     )
     submission_parser.add_argument(
         "--output-path",
-        required=True,
+        default=None,
         help="提出 CSV の出力先",
     )
     submission_parser.set_defaults(func=run_submission)
@@ -60,16 +66,6 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
         help="実行する recipe 名",
     )
     parser.add_argument(
-        "--params-path",
-        default="params.json",
-        help="モデル定義 JSON のパス",
-    )
-    parser.add_argument(
-        "--tracking-uri",
-        default="sqlite:///mlflow.db",
-        help="MLflow tracking URI",
-    )
-    parser.add_argument(
         "--experiment-name",
         default="spectral_analysis",
         help="MLflow experiment 名",
@@ -77,8 +73,9 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--run-name", default=None, help="MLflow run 名")
     parser.add_argument(
         "--verbose",
-        action="store_true",
-        help="パイプライン実行ログを表示する",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="パイプライン実行ログを表示する（既定: 有効）",
     )
 
 
@@ -88,12 +85,10 @@ def run_cv(args: argparse.Namespace) -> int:
     state = TrainState(dataset=train_dataset)
     pipeline = build_cv_pipeline(
         recipe_builder=RecipeBuilder(),
-        model_builder=ModelBuilder(config_path=args.params_path),
+        model_builder=ModelBuilder(),
         recipe_name=args.recipe_name,
         run_name=args.run_name,
-        tracking_uri=args.tracking_uri,
         experiment_name=args.experiment_name,
-        plot_oof=args.plot_oof,
         verbose=args.verbose,
     )
     updated = pipeline.run(state)
@@ -118,17 +113,20 @@ def run_submission(args: argparse.Namespace) -> int:
     state = TrainState(train_dataset=train_dataset, test_dataset=test_dataset)
     pipeline = build_submission_pipeline(
         recipe_builder=RecipeBuilder(),
-        model_builder=ModelBuilder(config_path=args.params_path),
+        model_builder=ModelBuilder(),
         recipe_name=args.recipe_name,
         run_name=args.run_name,
-        tracking_uri=args.tracking_uri,
         experiment_name=args.experiment_name,
         verbose=args.verbose,
     )
     updated = pipeline.run(state)
     assert updated.test_predictions is not None
 
-    output_path = Path(args.output_path)
+    output_path = (
+        Path(args.output_path)
+        if args.output_path is not None
+        else Path(DEFAULT_SUBMISSION_DIR) / f"{args.recipe_name}.csv"
+    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8", newline="") as f:
         writer = csv.writer(f)

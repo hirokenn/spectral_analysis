@@ -7,6 +7,21 @@ from pathlib import Path
 from src.cli import main
 
 
+def write_params_json(path: Path) -> None:
+    """CLI テスト用の params.json を作成する。"""
+    path.write_text(
+        json.dumps(
+            {
+                "base_pls": {
+                    "build_type": "pls",
+                    "params": {"n_components": 1, "scale": True},
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
 def write_train_csv(path: Path) -> None:
     """CLI テスト用の train.csv を作成する。"""
     with path.open("w", encoding="cp932", newline="") as f:
@@ -27,39 +42,18 @@ def write_test_csv(path: Path) -> None:
         writer.writerow([11, 5, 1.2, 1.3])
 
 
-def write_params_json(path: Path) -> None:
-    """CLI テスト用の params.json を作成する。"""
-    path.write_text(
-        json.dumps(
-            {
-                "base_pls": {
-                    "build_type": "pls",
-                    "params": {"n_components": 1, "scale": True},
-                }
-            }
-        ),
-        encoding="utf-8",
-    )
-
-
 def test_cli_cv_runs(tmp_path: Path, capsys) -> None:  # type: ignore[no-untyped-def]
     train_path = tmp_path / "train.csv"
-    params_path = tmp_path / "params.json"
     write_train_csv(train_path)
-    write_params_json(params_path)
 
     exit_code = main(
         [
             "cv",
             "--train-path",
             str(train_path),
-            "--params-path",
-            str(params_path),
-            "--tracking-uri",
-            f"file://{tmp_path}/mlruns",
             "--experiment-name",
             "test_cli_cv",
-            "--no-plot-oof",
+            "--no-verbose",
         ]
     )
 
@@ -72,15 +66,15 @@ def test_cli_cv_runs(tmp_path: Path, capsys) -> None:  # type: ignore[no-untyped
 
 
 def test_cli_submission_runs_and_writes_csv(
-    tmp_path: Path, capsys
+    tmp_path: Path, capsys, monkeypatch
 ) -> None:  # type: ignore[no-untyped-def]
     train_path = tmp_path / "train.csv"
     test_path = tmp_path / "test.csv"
-    output_path = tmp_path / "submission.csv"
-    params_path = tmp_path / "params.json"
+    output_path = tmp_path / "submission" / "base_pls.csv"
     write_train_csv(train_path)
     write_test_csv(test_path)
-    write_params_json(params_path)
+    write_params_json(tmp_path / "params.json")
+    monkeypatch.chdir(tmp_path)
 
     exit_code = main(
         [
@@ -89,14 +83,9 @@ def test_cli_submission_runs_and_writes_csv(
             str(train_path),
             "--test-path",
             str(test_path),
-            "--output-path",
-            str(output_path),
-            "--params-path",
-            str(params_path),
-            "--tracking-uri",
-            f"file://{tmp_path}/mlruns",
             "--experiment-name",
             "test_cli_submission",
+            "--no-verbose",
         ]
     )
 
@@ -104,7 +93,7 @@ def test_cli_submission_runs_and_writes_csv(
     payload = json.loads(captured.out.strip())
     assert exit_code == 0
     assert payload["run_id"] is not None
-    assert payload["output_path"] == str(output_path)
+    assert Path(payload["output_path"]).resolve() == output_path.resolve()
     assert output_path.exists()
 
     rows = list(csv.reader(output_path.open("r", encoding="utf-8", newline="")))

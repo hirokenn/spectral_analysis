@@ -9,19 +9,19 @@
 
 データセットの基本情報（サイズ、カラム定義、統計量）と、解析に必要な事前知識は以下にまとまっています。
 
-- `docs/data_info.md`
-- `docs/domain_knowledge.md`
+- [`docs/data_info.md`](docs/data_info.md)
+- [`docs/knowledge.md`](docs/knowledge.md)
 
 ## ドキュメント一覧
 
 プロジェクト全体像と詳細設計は以下のドキュメントを参照してください。
 
-- `docs/architecture.md`: フォルダ構成と全体アーキテクチャ
-- `docs/design/recipe.md`: recipe 設計
-- `docs/design/preprocess.md`: 前処理設計
-- `docs/design/pipeline.md`: pipeline 設計
-- `docs/data_info.md`: データの基本情報
-- `docs/knowledge.md`: 背景知識
+- [`docs/architecture.md`](docs/architecture.md): フォルダ構成と全体アーキテクチャ
+- [`docs/design/recipe.md`](docs/design/recipe.md): recipe 設計
+- [`docs/design/preprocess.md`](docs/design/preprocess.md): 前処理設計
+- [`docs/design/pipeline.md`](docs/design/pipeline.md): pipeline 設計
+- [`docs/data_info.md`](docs/data_info.md): データの基本情報
+- [`docs/knowledge.md`](docs/knowledge.md): 背景知識
 
 ## このコンペで難しい点・注意点
 
@@ -81,18 +81,16 @@ CLI は `uv run spectral-analysis` から実行できます。
 
 ```bash
 uv run spectral-analysis cv \
-  --train-path data/train.csv \
-  --recipe-name base_pls \
-  --params-path params.json
+  --recipe-name base_pls
 ```
 
 必要に応じて以下も指定できます。
 
-- `--tracking-uri`
 - `--experiment-name`
 - `--run-name`
-- `--plot-oof` / `--no-plot-oof`
-- `--verbose`
+- `--no-verbose`
+
+`--train-path` は省略時に `data/train.csv` が使われます。
 
 実行後は `run_id`、`overall_rmse`、`group_rmse_mean` が JSON で標準出力されます。
 
@@ -100,20 +98,13 @@ uv run spectral-analysis cv \
 
 ```bash
 uv run spectral-analysis submission \
-  --train-path data/train.csv \
-  --test-path data/test.csv \
-  --output-path outputs/submission.csv \
-  --recipe-name base_pls \
-  --params-path params.json
+  --recipe-name base_pls
 ```
+
+`--train-path` は省略時に `data/train.csv`、`--test-path` は省略時に `data/test.csv` が使われます。  
+`--output-path` を省略した場合は `submission/{recipe_name}.csv` に保存されます。
 
 出力 CSV は次の形式で保存されます。
 
 - `sample number`
 - `含水率`
-
-### 関連ドキュメント
-
-- `docs/design/recipe.md`
-- `docs/design/preprocess.md`
-- `docs/design/pipeline.md`
