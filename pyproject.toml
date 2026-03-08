@@ -5,8 +5,11 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "ipykernel>=7.2.0",
     "lightgbm>=4.6.0",
     "mlflow>=3.10.1",
+    "nbdime>=4.0.4",
+    "nbstripout>=0.9.1",
     "numpy>=2.4.2",
     "pandas>=2.3.3",
     "plotly>=6.6.0",
