@@ -6,9 +6,10 @@ import numpy as np
 from sklearn.cross_decomposition import PLSRegression  # type: ignore[import-untyped]
 
 from src.data.dataset import Dataset
+from src.model.base_model import BaseModel, ModelType
 
 
-class PLSRegressor:
+class PLSRegressor(BaseModel):
     """`PLSRegression` を `Dataset` 入出力で扱うための回帰器。"""
 
     def __init__(self, **params: Any) -> None:
@@ -22,6 +23,10 @@ class PLSRegressor:
         self.params = default_params
         self.model = PLSRegression(**self.params)
         self._is_fitted = False
+
+    @property
+    def model_type(self) -> ModelType:
+        return ModelType.SKLEARN
 
     def fit(self, ds: Dataset) -> None:
         """学習データでモデルを学習する。"""
@@ -45,3 +50,12 @@ class PLSRegressor:
         if not self._is_fitted:
             raise ValueError("モデルが未学習です。先に fit を実行してください")
         return self.model.predict(ds.X).ravel()
+
+    def get_native_model(self) -> Any:
+        """内部の `PLSRegression` インスタンスを返す。"""
+        return self.model
+
+    def set_native_model(self, native_model: Any) -> None:
+        """読み込んだ `PLSRegression` を設定し、学習済み状態にする。"""
+        self.model = native_model
+        self._is_fitted = True

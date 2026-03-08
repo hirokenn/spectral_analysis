@@ -3,6 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Union
 
+from src.data.dataset import Dataset
+from src.model.base_model import BaseModel, ModelType
+
 
 @dataclass
 class BaseState:
@@ -11,7 +14,10 @@ class BaseState:
     入出力をここに乗せていく。
     """
 
-    pass
+    dataset: Dataset
+    model_type: ModelType
+    model: BaseModel
+    model_uri: str | None = None
 
 
 @dataclass
