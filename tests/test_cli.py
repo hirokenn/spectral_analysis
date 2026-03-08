@@ -92,7 +92,7 @@ def test_cli_submission_runs_and_writes_csv(
     captured = capsys.readouterr()
     payload = json.loads(captured.out.strip())
     assert exit_code == 0
-    assert payload["run_id"] is not None
+    assert payload["run_id"] is None
     assert Path(payload["output_path"]).resolve() == output_path.resolve()
     assert output_path.exists()
 

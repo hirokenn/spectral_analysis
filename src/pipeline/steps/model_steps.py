@@ -48,7 +48,12 @@ class TrainCV(BaseStep):
         result = trainer.run(dataset=dataset)
         train_state.oof_predictions = result.oof_predictions
         train_state.recipe_name = recipe.name
-        train_state.model_type = self.model_builder.build(recipe.model_name).model_type
+        preprocessor = recipe.preprocessor_factory()
+        model = self.model_builder.build(recipe.model_name)
+        processed_dataset = preprocessor.fit_transform(dataset)
+        model.fit(processed_dataset)
+        train_state.model = model
+        train_state.model_type = model.model_type
         self.log_out = (
             f"recipe={recipe.name}, "
             f"splits={result.n_splits}, "

@@ -104,10 +104,8 @@ pred = result.test_predictions
 
 実行される Step は次の通りです。
 
-- `MlflowStartRun`
 - `TrainFull`
 - `PredictTest`
-- `MlflowEndRun`
 
 このパイプラインは以下を行います。
 

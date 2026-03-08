@@ -36,10 +36,8 @@ def test_build_submission_pipeline_has_expected_steps() -> None:
     )
 
     assert [step.__class__.__name__ for step in pipeline.steps] == [
-        "MlflowStartRun",
         "TrainFull",
         "PredictTest",
-        "MlflowEndRun",
     ]
 
 
@@ -96,7 +94,7 @@ def test_submission_pipeline_runs_end_to_end(tmp_path: Path) -> None:
 
     updated = pipeline.run(state)
 
-    assert updated.run_id is not None
+    assert updated.run_id is None
     assert updated.model is not None
     assert updated.preprocessor is not None
     assert updated.test_predictions is not None

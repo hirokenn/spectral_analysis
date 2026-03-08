@@ -33,9 +33,10 @@ class OOFPlotter:
 
         y_true = dataset.y[valid_mask]
         y_pred = oof_predictions[valid_mask]
+        groups = dataset.groups[valid_mask] if dataset.groups is not None else None
 
         figures: dict[str, go.Figure] = {
-            "plots/correlation.html": self.correlation_plot(y_true, y_pred),
+            "plots/correlation.html": self.correlation_plot(y_true, y_pred, groups),
             "plots/residual_histogram.html": self.residual_histogram(y_true, y_pred),
         }
 
@@ -46,18 +47,33 @@ class OOFPlotter:
 
         return figures
 
-    def correlation_plot(self, y_true: np.ndarray, y_pred: np.ndarray) -> go.Figure:
-        """予測 vs 実測の散布図を返す。"""
+    def correlation_plot(
+        self, y_true: np.ndarray, y_pred: np.ndarray, groups: np.ndarray | None = None
+    ) -> go.Figure:
+        """予測 vs 実測の散布図を返す。groups があれば色分けする。"""
         fig = go.Figure()
-        fig.add_trace(
-            go.Scatter(
-                x=y_true,
-                y=y_pred,
-                mode="markers",
-                marker=dict(size=5, opacity=0.6),
-                name="OOF",
+        if groups is None:
+            fig.add_trace(
+                go.Scatter(
+                    x=y_true,
+                    y=y_pred,
+                    mode="markers",
+                    marker=dict(size=5, opacity=0.6),
+                    name="OOF",
+                )
             )
-        )
+        else:
+            for group_id in np.unique(groups):
+                group_mask = groups == group_id
+                fig.add_trace(
+                    go.Scatter(
+                        x=y_true[group_mask],
+                        y=y_pred[group_mask],
+                        mode="markers",
+                        marker=dict(size=5, opacity=0.6),
+                        name=f"group={int(group_id)}",
+                    )
+                )
         vmin = min(float(y_true.min()), float(y_pred.min()))
         vmax = max(float(y_true.max()), float(y_pred.max()))
         fig.add_trace(
@@ -103,11 +119,18 @@ class OOFPlotter:
         importance = list(feature_importance.values())
 
         fig = go.Figure()
-        fig.add_trace(go.Bar(x=feature_names, y=importance, name="Feature Importance"))
+        fig.add_trace(
+            go.Bar(
+                x=importance,
+                y=feature_names,
+                orientation="h",
+                name="Feature Importance",
+            )
+        )
         fig.update_layout(
             title="Feature Importance",
-            xaxis_title="Feature",
-            yaxis_title="Importance",
+            xaxis_title="Importance",
+            yaxis_title="Feature",
             template="plotly_white",
         )
         return fig

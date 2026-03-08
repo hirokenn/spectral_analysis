@@ -57,18 +57,12 @@ def build_submission_pipeline(
 ) -> Pipeline:
     """全学習データで学習し、test データを予測する提出用パイプラインを返す。"""
     pipeline = (
-        MlflowStartRun(
-            run_name=run_name,
-            tracking_uri=tracking_uri,
-            experiment_name=experiment_name,
-        )
-        >> TrainFull(
+        TrainFull(
             recipe_builder=recipe_builder,
             model_builder=model_builder,
             recipe_name=recipe_name,
         )
         >> PredictTest()
-        >> MlflowEndRun()
     )
     pipeline.verbose = verbose
     return pipeline

@@ -5,6 +5,7 @@ from unittest.mock import patch
 import numpy as np
 
 from src.model.base_model import ModelType
+from src.model.model_builder import ModelBuilder
 from src.pipeline.state import TrainState
 from src.pipeline.steps.model_steps import (
     EvaluateOOF,
@@ -190,4 +191,47 @@ def test_plot_oof_includes_feature_importance_when_model_set(mock_mlflow) -> Non
     artifact_names = [call.args[1] for call in mock_mlflow.log_text.call_args_list]
     assert "plots/correlation.html" in artifact_names
     assert "plots/residual_histogram.html" in artifact_names
+    assert "plots/feature_importance.html" in artifact_names
+
+
+@patch("src.pipeline.steps.model_steps.mlflow")
+def test_train_cv_then_plot_oof_includes_feature_importance(
+    mock_mlflow,
+) -> None:  # type: ignore[no-untyped-def]
+    class FeatureImportanceModel(DummyMeanModel):
+        def feature_importance(self) -> dict[str, float] | None:
+            return {"f1": 0.1, "f2": 0.2}
+
+    class FeatureImportanceModelBuilder(ModelBuilder):
+        def __init__(self) -> None:
+            super().__init__(
+                config={"dummy_model": {"build_type": "pls", "params": {}}}
+            )
+
+        def build(self, model_name: str) -> FeatureImportanceModel:
+            _ = model_name
+            return FeatureImportanceModel()
+
+    ds = make_dataset(
+        X=np.array([[0.0], [1.0], [2.0], [3.0]]),
+        y=np.array([1.0, 2.0, 3.0, 4.0]),
+        groups=np.array([1, 1, 2, 2]),
+        sample_id=np.array([10, 11, 12, 13]),
+    )
+    cv = [
+        (subset(ds, [0, 1]), subset(ds, [2, 3])),
+        (subset(ds, [2, 3]), subset(ds, [0, 1])),
+    ]
+    state = TrainState(dataset=ds)
+    train_step = TrainCV(
+        recipe_builder=make_recipe_builder(),
+        model_builder=FeatureImportanceModelBuilder(),
+        recipe_name="dummy_recipe",
+    )
+    plot_step = PlotOOF()
+
+    trained = train_step.execute(state, cv=cv)
+    _ = plot_step.execute(trained)
+
+    artifact_names = [call.args[1] for call in mock_mlflow.log_text.call_args_list]
     assert "plots/feature_importance.html" in artifact_names

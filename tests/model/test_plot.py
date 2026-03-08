@@ -15,6 +15,16 @@ class TestCorrelationPlot:
         assert fig is not None
         assert len(fig.data) == 2  # scatter + y=x line
 
+    def test_colors_by_group_when_groups_given(self) -> None:
+        plotter = OOFPlotter()
+        fig = plotter.correlation_plot(
+            np.array([1.0, 2.0, 3.0, 4.0]),
+            np.array([1.1, 1.9, 3.2, 3.8]),
+            np.array([1, 1, 2, 2]),
+        )
+        assert fig is not None
+        assert len(fig.data) == 3  # group=1, group=2, y=x line
+
 
 class TestResidualHistogram:
     def test_returns_figure(self) -> None:
