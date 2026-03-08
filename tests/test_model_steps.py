@@ -1,0 +1,117 @@
+from __future__ import annotations
+
+import numpy as np
+
+from src.model.base_model import ModelType
+from src.pipeline.state import TrainState
+from src.pipeline.steps.model_steps import PredictTest, TrainCV, TrainFull
+from tests.helpers import (
+    DummyMeanModel,
+    DummyModelBuilder,
+    make_dataset,
+    make_recipe_builder,
+    subset,
+)
+
+
+def test_train_cv_updates_oof_predictions() -> None:
+    ds = make_dataset(
+        X=np.array([[0.0], [1.0], [2.0], [3.0]]),
+        y=np.array([1.0, 2.0, 3.0, 4.0]),
+        groups=np.array([1, 1, 2, 2]),
+        sample_id=np.array([10, 11, 12, 13]),
+    )
+    cv = [
+        (subset(ds, [0, 1]), subset(ds, [2, 3])),
+        (subset(ds, [2, 3]), subset(ds, [0, 1])),
+    ]
+    state = TrainState(dataset=ds, model_type=ModelType.SKLEARN, model=DummyMeanModel())
+    step = TrainCV(
+        recipe_builder=make_recipe_builder(),
+        model_builder=DummyModelBuilder(),
+        recipe_name="dummy_recipe",
+    )
+
+    updated = step.execute(state, cv=cv)
+
+    assert updated.oof_predictions is not None
+    expected = np.array([3.5, 3.5, 1.5, 1.5], dtype=np.float32)
+    np.testing.assert_allclose(updated.oof_predictions, expected)
+
+
+def test_train_cv_averages_when_sample_appears_multiple_times() -> None:
+    ds = make_dataset(
+        X=np.array([[0.0], [1.0], [2.0]]),
+        y=np.array([1.0, 2.0, 3.0]),
+        groups=np.array([1, 1, 2]),
+        sample_id=np.array([20, 21, 22]),
+    )
+    cv = [
+        (subset(ds, [0, 1]), subset(ds, [2])),
+        (subset(ds, [1, 2]), subset(ds, [0])),
+        (subset(ds, [0, 2]), subset(ds, [1])),
+    ]
+    state = TrainState(dataset=ds, model_type=ModelType.SKLEARN, model=DummyMeanModel())
+    step = TrainCV(
+        recipe_builder=make_recipe_builder(),
+        model_builder=DummyModelBuilder(),
+        recipe_name="dummy_recipe",
+    )
+
+    updated = step.execute(state, cv=cv)
+
+    assert updated.oof_predictions is not None
+    expected = np.array([2.5, 2.0, 1.5], dtype=np.float32)
+    np.testing.assert_allclose(updated.oof_predictions, expected)
+
+
+def test_train_full_sets_fitted_model_and_preprocessor() -> None:
+    ds = make_dataset(
+        X=np.array([[0.0], [1.0], [2.0]]),
+        y=np.array([1.0, 2.0, 3.0]),
+        groups=np.array([1, 1, 2]),
+        sample_id=np.array([1, 2, 3]),
+    )
+    state = TrainState(dataset=ds)
+    step = TrainFull(
+        recipe_builder=make_recipe_builder(),
+        model_builder=DummyModelBuilder(),
+        recipe_name="dummy_recipe",
+    )
+
+    updated = step.execute(state)
+
+    assert updated.preprocessor is not None
+    assert updated.model is not None
+    assert updated.model_type == ModelType.SKLEARN
+
+
+def test_predict_test_updates_predictions() -> None:
+    train_ds = make_dataset(
+        X=np.array([[0.0], [1.0], [2.0]]),
+        y=np.array([1.0, 2.0, 3.0]),
+        groups=np.array([1, 1, 2]),
+        sample_id=np.array([1, 2, 3]),
+    )
+    test_ds = make_dataset(
+        X=np.array([[10.0], [11.0]]),
+        y=None,
+        groups=np.array([3, 3]),
+        sample_id=np.array([100, 101]),
+    )
+    state = TrainState(train_dataset=train_ds, test_dataset=test_ds)
+    train_step = TrainFull(
+        recipe_builder=make_recipe_builder(),
+        model_builder=DummyModelBuilder(),
+        recipe_name="dummy_recipe",
+    )
+    predict_step = PredictTest()
+
+    trained = train_step.execute(state)
+    predicted = predict_step.execute(trained)
+
+    assert predicted.test_predictions is not None
+    np.testing.assert_allclose(
+        predicted.test_predictions,
+        np.array([2.0, 2.0], dtype=np.float32),
+    )
