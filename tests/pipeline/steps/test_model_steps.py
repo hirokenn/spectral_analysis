@@ -1,10 +1,18 @@
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import numpy as np
 
 from src.model.base_model import ModelType
 from src.pipeline.state import TrainState
-from src.pipeline.steps.model_steps import EvaluateOOF, PredictTest, TrainCV, TrainFull
+from src.pipeline.steps.model_steps import (
+    EvaluateOOF,
+    PlotOOF,
+    PredictTest,
+    TrainCV,
+    TrainFull,
+)
 from tests.helpers import (
     DummyMeanModel,
     DummyModelBuilder,
@@ -134,3 +142,52 @@ def test_evaluate_oof_updates_rmse_metrics() -> None:
     assert "group_rmse_by_group" in updated.metrics
     np.testing.assert_allclose(updated.metrics["overall_rmse"], np.sqrt(0.5))
     np.testing.assert_allclose(updated.metrics["group_rmse_mean"], np.sqrt(0.5))
+
+
+@patch("src.pipeline.steps.model_steps.mlflow")
+def test_plot_oof_logs_html_artifacts(mock_mlflow) -> None:  # type: ignore[no-untyped-def]
+    ds = make_dataset(
+        X=np.array([[0.0], [1.0], [2.0]]),
+        y=np.array([1.0, 2.0, 3.0]),
+        groups=np.array([1, 1, 2]),
+        sample_id=np.array([1, 2, 3]),
+    )
+    state = TrainState(
+        dataset=ds,
+        oof_predictions=np.array([1.1, 2.2, 2.8]),
+    )
+    step = PlotOOF()
+    step.execute(state)
+
+    assert mock_mlflow.log_text.call_count == 2
+    artifact_names = [call.args[1] for call in mock_mlflow.log_text.call_args_list]
+    assert "plots/correlation.html" in artifact_names
+    assert "plots/residual_histogram.html" in artifact_names
+
+
+@patch("src.pipeline.steps.model_steps.mlflow")
+def test_plot_oof_includes_feature_importance_when_model_set(mock_mlflow) -> None:  # type: ignore[no-untyped-def]
+    class FeatureImportanceModel(DummyMeanModel):
+        def feature_importance(self) -> dict[str, float] | None:
+            return {"f1": 0.1, "f2": 0.2}
+
+    ds = make_dataset(
+        X=np.array([[0.0, 1.0], [1.0, 2.0]]),
+        y=np.array([1.0, 2.0]),
+        groups=np.array([1, 2]),
+        sample_id=np.array([1, 2]),
+    )
+    model = FeatureImportanceModel()
+    model.fit(ds)
+    state = TrainState(
+        dataset=ds,
+        oof_predictions=np.array([1.0, 2.0]),
+        model=model,
+    )
+    step = PlotOOF()
+    step.execute(state)
+
+    artifact_names = [call.args[1] for call in mock_mlflow.log_text.call_args_list]
+    assert "plots/correlation.html" in artifact_names
+    assert "plots/residual_histogram.html" in artifact_names
+    assert "plots/feature_importance.html" in artifact_names

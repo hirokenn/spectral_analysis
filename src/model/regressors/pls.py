@@ -59,3 +59,11 @@ class PLSRegressor(BaseModel):
         """読み込んだ `PLSRegression` を設定し、学習済み状態にする。"""
         self.model = native_model
         self._is_fitted = True
+
+    def feature_importance(self) -> dict[str, float] | None:
+        """回帰係数から特徴量重要度辞書を返す。"""
+        if not self._is_fitted or not hasattr(self.model, "coef_"):
+            return None
+
+        coef = np.asarray(self.model.coef_).ravel()
+        return {f"feature_{i}": float(value) for i, value in enumerate(coef)}

@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from typing import Any, Iterable, cast
 
+import mlflow  # type: ignore[import-untyped]
+
 from src.data.dataset import Dataset
 from src.data.group_cv import GroupCV
 from src.model.eval import OOFEvaluator
 from src.model.model_builder import ModelBuilder
+from src.model.plot import OOFPlotter
 from src.model.trainers.cv_trainer import CVTrainer
 from src.model.trainers.full_trainer import FullTrainer
 from src.pipeline.pipeline import BaseStep
@@ -162,6 +165,45 @@ class EvaluateOOF(BaseStep):
 
     def _resolve_train_dataset(self, state: TrainState) -> Dataset:
         """評価対象の学習データセットを解決する。"""
+        if state.train_dataset is not None:
+            return state.train_dataset
+        if state.dataset is not None:
+            return state.dataset
+        raise ValueError("train_dataset も dataset も設定されていません")
+
+
+class PlotOOF(BaseStep):
+    """OOF 予測結果のプロットを作成して MLflow に HTML として保存する。"""
+
+    def __init__(self, plotter: OOFPlotter | None = None) -> None:
+        super().__init__()
+        self.plotter = plotter or OOFPlotter()
+
+    def execute(self, state: StateLike, **kwargs: Any) -> StateLike:
+        """プロットを生成し、アクティブな MLflow run に artifact としてログする。"""
+        self._require_state(
+            state,
+            allowed_types=(TrainState,),
+            require_non_none=["oof_predictions"],
+        )
+        train_state = cast(TrainState, state)
+        dataset = self._resolve_train_dataset(train_state)
+        assert train_state.oof_predictions is not None
+
+        figures = self.plotter.create_all(
+            oof_predictions=train_state.oof_predictions,
+            dataset=dataset,
+            model=train_state.model,
+        )
+
+        for artifact_name, fig in figures.items():
+            mlflow.log_text(fig.to_html(), artifact_name)
+
+        self.log_out = f"logged={len(figures)} plots"
+        return train_state
+
+    def _resolve_train_dataset(self, state: TrainState) -> Dataset:
+        """プロット対象の学習データセットを解決する。"""
         if state.train_dataset is not None:
             return state.train_dataset
         if state.dataset is not None:
