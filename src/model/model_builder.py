@@ -1,11 +1,30 @@
 from __future__ import annotations
 
 import json
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
 from src.model.base_model import BaseModel
 from src.model.regressors.pls import PLSRegressor
+
+
+class BuildType(StrEnum):
+    """ModelBuilder で扱う build_type 定義。"""
+
+    PLS = "pls"
+    STACKING = "stacking"
+
+    @classmethod
+    def from_value(cls, value: str) -> BuildType:
+        """文字列を `BuildType` に変換する。"""
+        try:
+            return cls(value)
+        except ValueError as exc:
+            allowed = ", ".join(bt.value for bt in cls)
+            raise ValueError(
+                f"未対応の build_type です: {value} (allowed: {allowed})"
+            ) from exc
 
 
 class ModelBuilder:
@@ -31,9 +50,9 @@ class ModelBuilder:
     def build(self, model_name: str) -> BaseModel:
         """モデル名を受け取り、定義に応じたモデルを返す。"""
         model_config = self._get_model_config(model_name)
-        build_type = model_config["build_type"]
+        build_type = BuildType.from_value(model_config["build_type"])
 
-        if build_type == "stacking":
+        if build_type == BuildType.STACKING:
             raise NotImplementedError(
                 "stacking の build は未実装です。"
                 "将来は base_models を再帰的に build してください。"
@@ -44,10 +63,10 @@ class ModelBuilder:
     def _build_single_model(self, model_name: str) -> BaseModel:
         """単体モデルを build_type に応じて構築する。"""
         model_config = self._get_model_config(model_name)
-        build_type = model_config["build_type"]
+        build_type = BuildType.from_value(model_config["build_type"])
         params = model_config.get("params", {})
 
-        if build_type == "pls":
+        if build_type == BuildType.PLS:
             return PLSRegressor(**params)
 
         raise ValueError(f"未対応の build_type です: {build_type} (model={model_name})")
