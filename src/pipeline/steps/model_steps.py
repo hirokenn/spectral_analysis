@@ -16,6 +16,15 @@ from src.pipeline.state import PredictState, StateLike, TrainState
 from src.recipes.builder import RecipeBuilder
 
 
+def _resolve_train_dataset(state: TrainState) -> Dataset:
+    """学習対象データセットを解決する。"""
+    if state.train_dataset is not None:
+        return state.train_dataset
+    if state.dataset is not None:
+        return state.dataset
+    raise ValueError("train_dataset も dataset も設定されていません")
+
+
 class TrainCV(BaseStep):
     """CV 学習器の実行を担当するラッパー Step。"""
 
@@ -38,7 +47,7 @@ class TrainCV(BaseStep):
         )
 
         train_state = cast(TrainState, state)
-        dataset = self._resolve_train_dataset(train_state)
+        dataset = _resolve_train_dataset(train_state)
         recipe = self.recipe_builder.build(self.recipe_name)
         cv = cast(
             Iterable[tuple[Dataset, Dataset]],
@@ -60,14 +69,6 @@ class TrainCV(BaseStep):
             f"covered={result.covered_count}/{result.sample_count}"
         )
         return train_state
-
-    def _resolve_train_dataset(self, state: TrainState) -> Dataset:
-        """学習対象データセットを解決する。"""
-        if state.train_dataset is not None:
-            return state.train_dataset
-        if state.dataset is not None:
-            return state.dataset
-        raise ValueError("train_dataset も dataset も設定されていません")
 
 
 class TrainFull(BaseStep):
@@ -91,7 +92,7 @@ class TrainFull(BaseStep):
             allowed_types=(TrainState,),
         )
         train_state = cast(TrainState, state)
-        dataset = self._resolve_train_dataset(train_state)
+        dataset = _resolve_train_dataset(train_state)
         recipe = self.recipe_builder.build(self.recipe_name)
         trainer = FullTrainer(recipe=recipe, model_builder=self.model_builder)
         result = trainer.run(dataset)
@@ -102,14 +103,6 @@ class TrainFull(BaseStep):
         train_state.model_type = result.model.model_type
         self.log_out = f"recipe={recipe.name}"
         return train_state
-
-    def _resolve_train_dataset(self, state: TrainState) -> Dataset:
-        """学習対象データセットを解決する。"""
-        if state.train_dataset is not None:
-            return state.train_dataset
-        if state.dataset is not None:
-            return state.dataset
-        raise ValueError("train_dataset も dataset も設定されていません")
 
 
 class PredictTest(BaseStep):
@@ -155,7 +148,7 @@ class EvaluateOOF(BaseStep):
             require_non_none=["oof_predictions"],
         )
         train_state = cast(TrainState, state)
-        dataset = self._resolve_train_dataset(train_state)
+        dataset = _resolve_train_dataset(train_state)
         assert train_state.oof_predictions is not None
 
         result = self.evaluator.evaluate(train_state.oof_predictions, dataset)
@@ -167,14 +160,6 @@ class EvaluateOOF(BaseStep):
             f"group_rmse_mean={result.group_rmse_mean:.6f}"
         )
         return train_state
-
-    def _resolve_train_dataset(self, state: TrainState) -> Dataset:
-        """評価対象の学習データセットを解決する。"""
-        if state.train_dataset is not None:
-            return state.train_dataset
-        if state.dataset is not None:
-            return state.dataset
-        raise ValueError("train_dataset も dataset も設定されていません")
 
 
 class PlotOOF(BaseStep):
@@ -192,7 +177,7 @@ class PlotOOF(BaseStep):
             require_non_none=["oof_predictions"],
         )
         train_state = cast(TrainState, state)
-        dataset = self._resolve_train_dataset(train_state)
+        dataset = _resolve_train_dataset(train_state)
         assert train_state.oof_predictions is not None
 
         figures = self.plotter.create_all(
@@ -206,11 +191,3 @@ class PlotOOF(BaseStep):
 
         self.log_out = f"logged={len(figures)} plots"
         return train_state
-
-    def _resolve_train_dataset(self, state: TrainState) -> Dataset:
-        """プロット対象の学習データセットを解決する。"""
-        if state.train_dataset is not None:
-            return state.train_dataset
-        if state.dataset is not None:
-            return state.dataset
-        raise ValueError("train_dataset も dataset も設定されていません")
