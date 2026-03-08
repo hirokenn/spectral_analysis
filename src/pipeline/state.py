@@ -14,10 +14,11 @@ class BaseState:
     入出力をここに乗せていく。
     """
 
-    dataset: Dataset
-    model_type: ModelType
-    model: BaseModel
+    dataset: Dataset | None = None
+    model_type: ModelType | None = None
+    model: BaseModel | None = None
     model_uri: str | None = None
+    run_id: str | None = None
 
 
 @dataclass

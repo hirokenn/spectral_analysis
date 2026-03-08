@@ -36,7 +36,9 @@ class ModelSave(BaseStep):
         self.registered_model_name = registered_model_name
 
     def execute(self, state: StateLike, **kwargs: Any) -> StateLike:
-        self._require_state(state, require_non_none=["model"])
+        self._require_state(state, require_non_none=["model", "model_type"])
+        assert state.model is not None
+        assert state.model_type is not None
         model_uri = MLflowHandler.log_model(
             model_type=state.model_type,
             native_model=state.model.get_native_model(),
@@ -60,7 +62,9 @@ class ModelLoad(BaseStep):
         self.model_uri = model_uri
 
     def execute(self, state: StateLike, **kwargs: Any) -> StateLike:
-        self._require_state(state, require_non_none=["model"])
+        self._require_state(state, require_non_none=["model", "model_type"])
+        assert state.model is not None
+        assert state.model_type is not None
         native_model = MLflowHandler.load_model(
             model_type=state.model_type,
             model_uri=self.model_uri,
