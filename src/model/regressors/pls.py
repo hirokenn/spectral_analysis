@@ -23,6 +23,7 @@ class PLSRegressor(BaseModel):
         self.params = default_params
         self.model = PLSRegression(**self.params)
         self._is_fitted = False
+        self.feature_names_: list[str] | None = None
 
     @property
     def model_type(self) -> ModelType:
@@ -44,6 +45,8 @@ class PLSRegressor(BaseModel):
         self.model = PLSRegression(**fit_params)
         self.model.fit(ds.X, ds.y)
         self._is_fitted = True
+        assert ds.feature_names is not None
+        self.feature_names_ = [str(name) for name in ds.feature_names]
 
     def predict(self, ds: Dataset) -> np.ndarray:
         """学習済みモデルで予測値を返す。"""
@@ -66,4 +69,10 @@ class PLSRegressor(BaseModel):
             return None
 
         coef = np.asarray(self.model.coef_).ravel()
-        return {f"feature_{i}": float(value) for i, value in enumerate(coef)}
+        feature_names = self.feature_names_ or [
+            f"feature_{i}" for i in range(coef.shape[0])
+        ]
+        return {
+            feature_name: float(value)
+            for feature_name, value in zip(feature_names, coef, strict=True)
+        }
