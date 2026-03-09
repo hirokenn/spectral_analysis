@@ -8,8 +8,7 @@ import numpy as np
 from src.data.dataset import Dataset
 from src.model.base_model import ModelType
 from src.model.model_builder import ModelBuilder
-from src.preprocess.identity import IdentityPreprocessor
-from src.preprocess.pipeline import PreprocessingPipeline
+from src.preprocess.preprocessor_builder import PreprocessorBuilder
 from src.recipes.base import Recipe
 from src.recipes.builder import RecipeBuilder
 
@@ -49,11 +48,26 @@ class DummyModelBuilder(ModelBuilder):
         return DummyMeanModel()
 
 
+class DummyPreprocessorBuilder(PreprocessorBuilder):
+    """常に identity 前処理を解決できるテスト用 builder。"""
+
+    def __init__(self) -> None:
+        super().__init__(
+            config={
+                "identity": {"build_type": "identity", "params": {}},
+                "identity_pipeline": {
+                    "build_type": "pipeline",
+                    "steps": ["identity"],
+                },
+            }
+        )
+
+
 def make_recipe(recipe_name: str = "dummy_recipe") -> Recipe:
     """Identity 前処理を使うテスト用 recipe を返す。"""
     return Recipe(
         name=recipe_name,
-        preprocessor_factory=lambda: PreprocessingPipeline() >> IdentityPreprocessor(),
+        preprocessor_name="identity_pipeline",
         model_name="dummy_model",
     )
 
