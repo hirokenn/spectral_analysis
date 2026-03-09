@@ -10,6 +10,7 @@ from src.data.dataset import Dataset
 from src.model.model_builder import ModelBuilder
 from src.pipeline import build_cv_pipeline, build_submission_pipeline
 from src.pipeline.state import TrainState
+from src.preprocess.preprocessor_builder import PreprocessorBuilder
 from src.recipes.default_recipes import RECIPES
 from src.recipes.builder import RecipeBuilder
 
@@ -86,6 +87,7 @@ def run_cv(args: argparse.Namespace) -> int:
     pipeline = build_cv_pipeline(
         recipe_builder=RecipeBuilder(),
         model_builder=ModelBuilder(),
+        preprocessor_builder=PreprocessorBuilder(),
         recipe_name=args.recipe_name,
         run_name=args.run_name,
         experiment_name=args.experiment_name,
@@ -114,6 +116,7 @@ def run_submission(args: argparse.Namespace) -> int:
     pipeline = build_submission_pipeline(
         recipe_builder=RecipeBuilder(),
         model_builder=ModelBuilder(),
+        preprocessor_builder=PreprocessorBuilder(),
         recipe_name=args.recipe_name,
         run_name=args.run_name,
         experiment_name=args.experiment_name,

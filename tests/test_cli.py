@@ -22,6 +22,22 @@ def write_params_json(path: Path) -> None:
     )
 
 
+def write_preprocess_params_json(path: Path) -> None:
+    """CLI テスト用の preprocess_params.json を作成する。"""
+    path.write_text(
+        json.dumps(
+            {
+                "identity": {"build_type": "identity", "params": {}},
+                "base_identity_pipeline": {
+                    "build_type": "pipeline",
+                    "steps": ["identity"],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
 def write_train_csv(path: Path) -> None:
     """CLI テスト用の train.csv を作成する。"""
     with path.open("w", encoding="cp932", newline="") as f:
@@ -74,6 +90,7 @@ def test_cli_submission_runs_and_writes_csv(
     write_train_csv(train_path)
     write_test_csv(test_path)
     write_params_json(tmp_path / "params.json")
+    write_preprocess_params_json(tmp_path / "preprocess_params.json")
     monkeypatch.chdir(tmp_path)
 
     exit_code = main(

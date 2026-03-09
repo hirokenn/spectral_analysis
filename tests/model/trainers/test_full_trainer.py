@@ -3,7 +3,12 @@ from __future__ import annotations
 import numpy as np
 
 from src.model.trainers.full_trainer import FullTrainer
-from tests.helpers import DummyModelBuilder, make_dataset, make_recipe
+from tests.helpers import (
+    DummyModelBuilder,
+    DummyPreprocessorBuilder,
+    make_dataset,
+    make_recipe,
+)
 
 
 def test_full_trainer_fits_model_and_preprocessor() -> None:
@@ -13,7 +18,11 @@ def test_full_trainer_fits_model_and_preprocessor() -> None:
         groups=np.array([1, 1, 2]),
         sample_id=np.array([1, 2, 3]),
     )
-    trainer = FullTrainer(recipe=make_recipe(), model_builder=DummyModelBuilder())
+    trainer = FullTrainer(
+        recipe=make_recipe(),
+        model_builder=DummyModelBuilder(),
+        preprocessor_builder=DummyPreprocessorBuilder(),
+    )
 
     result = trainer.run(ds)
 

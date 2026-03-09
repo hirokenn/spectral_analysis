@@ -1,0 +1,10 @@
+{
+    "identity": {
+        "build_type": "identity",
+        "params": {}
+    },
+    "base_identity_pipeline": {
+        "build_type": "pipeline",
+        "steps": ["identity"]
+    }
+}

@@ -3,7 +3,13 @@ from __future__ import annotations
 import numpy as np
 
 from src.model.trainers.cv_trainer import CVTrainer
-from tests.helpers import DummyModelBuilder, make_dataset, make_recipe, subset
+from tests.helpers import (
+    DummyModelBuilder,
+    DummyPreprocessorBuilder,
+    make_dataset,
+    make_recipe,
+    subset,
+)
 
 
 def test_cv_trainer_returns_expected_oof_predictions() -> None:
@@ -21,6 +27,7 @@ def test_cv_trainer_returns_expected_oof_predictions() -> None:
         cv=cv,
         recipe=make_recipe(),
         model_builder=DummyModelBuilder(),
+        preprocessor_builder=DummyPreprocessorBuilder(),
     )
 
     result = trainer.run(ds)
