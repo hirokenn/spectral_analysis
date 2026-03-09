@@ -66,7 +66,17 @@
             ]
         }
     },
-    "snv_lgbm_union": {
+    "group_sequence_features_default": {
+        "build_type": "group_sequence",
+        "params": {
+            "target_wavenumbers": [
+                5200.0,
+                7000.0
+            ],
+            "rolling_window": 5
+        }
+    },
+    "snv_lgbm_spectral_union": {
         "build_type": "feature_union",
         "branches": [
             "interval_mean_100",
@@ -80,17 +90,24 @@
         "steps": ["identity"]
     },
     "snv_lgbm_pipeline": {
+        "build_type": "feature_union",
+        "branches": [
+            "snv_lgbm_snv_branch",
+            "group_sequence_features_default"
+        ]
+    },
+    "snv_lgbm_snv_branch": {
         "build_type": "pipeline",
         "steps": [
             "snv",
-            "snv_lgbm_union"
+            "snv_lgbm_spectral_union"
         ]
     },
     "savgol_lgbm_pipeline": {
         "build_type": "pipeline",
         "steps": [
             "savgol_smoothing",
-            "snv_lgbm_union"
+            "snv_lgbm_spectral_union"
         ]
     }
 }
