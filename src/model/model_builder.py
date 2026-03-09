@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from src.model.base_model import BaseModel
+from src.model.regressors.lightgbm import LightGBMRegressor
 from src.model.regressors.pls import PLSRegressor
 
 
@@ -13,6 +14,7 @@ class BuildType(StrEnum):
     """ModelBuilder で扱う build_type 定義。"""
 
     PLS = "pls"
+    LIGHTGBM = "lightgbm"
     STACKING = "stacking"
 
     @classmethod
@@ -68,6 +70,8 @@ class ModelBuilder:
 
         if build_type == BuildType.PLS:
             return PLSRegressor(**params)
+        if build_type == BuildType.LIGHTGBM:
+            return LightGBMRegressor(**params)
 
         raise ValueError(f"未対応の build_type です: {build_type} (model={model_name})")
 
