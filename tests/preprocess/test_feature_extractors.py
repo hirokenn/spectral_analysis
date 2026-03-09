@@ -8,6 +8,7 @@ from src.preprocess.interval_features import (
     IntervalMeanFeatureExtractor,
     IntervalSlopeFeatureExtractor,
 )
+from src.preprocess.savgol import SavitzkyGolayPreprocessor
 from src.preprocess.snv import SNVPreprocessor
 from src.preprocess.water_band_summary import WaterBandSummaryFeatureExtractor
 from tests.helpers import make_dataset
@@ -45,6 +46,18 @@ def test_snv_preprocessor_normalizes_each_row() -> None:
 
     assert np.allclose(np.mean(transformed.X, axis=1), 0.0, atol=1e-6)
     assert np.allclose(np.std(transformed.X, axis=1), 1.0, atol=1e-6)
+
+
+def test_savgol_preprocessor_smooths_each_row() -> None:
+    ds = make_spectrum_dataset()
+    preprocessor = SavitzkyGolayPreprocessor(window_length=5, polyorder=2)
+
+    transformed = preprocessor.fit_transform(ds)
+
+    assert transformed.X.shape == ds.X.shape
+    assert transformed.feature_names is not None
+    assert np.array_equal(transformed.feature_names, ds.feature_names)
+    assert not np.allclose(transformed.X, ds.X)
 
 
 def test_interval_feature_extractors_return_expected_feature_count() -> None:

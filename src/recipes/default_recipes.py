@@ -8,9 +8,14 @@ RECIPES: dict[str, Recipe] = {
         preprocessor_name="base_identity_pipeline",
         model_name="base_pls",
     ),
-    "snv_lgbm_feature_only": Recipe(
-        name="snv_lgbm_feature_only",
-        preprocessor_name="snv_lgbm_feature_only_pipeline",
-        model_name="snv_lgbm_feature_only",
+    "snv_lgbm": Recipe(
+        name="snv_lgbm",
+        preprocessor_name="snv_lgbm_pipeline",
+        model_name="snv_lgbm",
+    ),
+    "savgol_lgbm": Recipe(
+        name="savgol_lgbm",
+        preprocessor_name="savgol_lgbm_pipeline",
+        model_name="savgol_lgbm",
     ),
 }

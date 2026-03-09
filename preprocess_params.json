@@ -7,6 +7,14 @@
         "build_type": "snv",
         "params": {}
     },
+    "savgol_smoothing": {
+        "build_type": "savgol",
+        "params": {
+            "window_length": 11,
+            "polyorder": 3,
+            "mode": "interp"
+        }
+    },
     "interval_mean_100": {
         "build_type": "interval_mean",
         "params": {
@@ -58,7 +66,7 @@
             ]
         }
     },
-    "snv_lgbm_feature_only_union": {
+    "snv_lgbm_union": {
         "build_type": "feature_union",
         "branches": [
             "interval_mean_100",
@@ -71,11 +79,18 @@
         "build_type": "pipeline",
         "steps": ["identity"]
     },
-    "snv_lgbm_feature_only_pipeline": {
+    "snv_lgbm_pipeline": {
         "build_type": "pipeline",
         "steps": [
             "snv",
-            "snv_lgbm_feature_only_union"
+            "snv_lgbm_union"
+        ]
+    },
+    "savgol_lgbm_pipeline": {
+        "build_type": "pipeline",
+        "steps": [
+            "savgol_smoothing",
+            "snv_lgbm_union"
         ]
     }
 }
