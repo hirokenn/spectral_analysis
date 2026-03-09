@@ -4,6 +4,7 @@ import numpy as np
 
 from src.data.dataset import Dataset
 from src.preprocess.dwt_features import DWTFeatureExtractor
+from src.preprocess.group_sequence_features import GroupSequenceFeatureExtractor
 from src.preprocess.interval_features import (
     IntervalMeanFeatureExtractor,
     IntervalSlopeFeatureExtractor,
@@ -119,3 +120,40 @@ def test_water_band_summary_feature_extractor_returns_selected_stats() -> None:
         "water_5200_max",
         "water_5200_area",
     ]
+
+
+def test_group_sequence_feature_extractor_returns_expected_features() -> None:
+    wavenumbers = np.array([7000.0, 6000.0, 5200.0], dtype=np.float32)
+    X = np.array(
+        [
+            [10.0, 0.0, 20.0],
+            [11.0, 0.0, 23.0],
+            [20.0, 0.0, 30.0],
+            [13.0, 0.0, 25.0],
+        ],
+        dtype=np.float32,
+    )
+    ds = make_dataset(
+        X=X,
+        y=np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32),
+        sample_id=np.array([101, 102, 201, 103], dtype=np.int64),
+        groups=np.array([1, 1, 2, 1], dtype=np.int64),
+        feature_names=[str(value) for value in wavenumbers],
+    ).with_features(
+        X, wavenumbers=wavenumbers, feature_names=[str(value) for value in wavenumbers]
+    )
+    extractor = GroupSequenceFeatureExtractor(rolling_window=2)
+
+    transformed = extractor.fit_transform(ds)
+
+    assert transformed.X.shape == (4, 11)
+    assert list(transformed.feature_names[:5]) == [
+        "group_position_index",
+        "group_position_ratio",
+        "delta_prev_5200",
+        "delta_prev_7000",
+        "delta_prev_global_mean",
+    ]
+    assert np.allclose(transformed.X[0, :5], [1.0, 0.0, 0.0, 0.0, 0.0])
+    assert np.allclose(transformed.X[1, :5], [2.0, 0.5, 3.0, 1.0, 4.0 / 3.0])
+    assert np.allclose(transformed.X[3, :5], [3.0, 1.0, 2.0, 2.0, 4.0 / 3.0])

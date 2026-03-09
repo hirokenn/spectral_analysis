@@ -4,6 +4,7 @@ import pytest
 
 from src.preprocess.dwt_features import DWTFeatureExtractor
 from src.preprocess.feature_union import FeatureUnion
+from src.preprocess.group_sequence_features import GroupSequenceFeatureExtractor
 from src.preprocess.identity import IdentityPreprocessor
 from src.preprocess.interval_features import (
     IntervalMeanFeatureExtractor,
@@ -80,6 +81,10 @@ def test_build_returns_extended_preprocessors_from_config() -> None:
                 "build_type": "savgol",
                 "params": {"window_length": 5, "polyorder": 2},
             },
+            "group_sequence": {
+                "build_type": "group_sequence",
+                "params": {"target_wavenumbers": [5200.0, 7000.0], "rolling_window": 3},
+            },
             "interval_mean": {
                 "build_type": "interval_mean",
                 "params": {"interval_size": 2},
@@ -101,6 +106,7 @@ def test_build_returns_extended_preprocessors_from_config() -> None:
 
     assert isinstance(builder.build("snv"), SNVPreprocessor)
     assert isinstance(builder.build("savgol"), SavitzkyGolayPreprocessor)
+    assert isinstance(builder.build("group_sequence"), GroupSequenceFeatureExtractor)
     assert isinstance(builder.build("interval_mean"), IntervalMeanFeatureExtractor)
     assert isinstance(builder.build("interval_slope"), IntervalSlopeFeatureExtractor)
     assert isinstance(builder.build("dwt"), DWTFeatureExtractor)

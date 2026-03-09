@@ -8,6 +8,7 @@ from typing import Any
 from src.preprocess.dwt_features import DWTFeatureExtractor
 from src.preprocess.base import BasePreprocessor
 from src.preprocess.feature_union import FeatureUnion
+from src.preprocess.group_sequence_features import GroupSequenceFeatureExtractor
 from src.preprocess.identity import IdentityPreprocessor
 from src.preprocess.interval_features import (
     IntervalMeanFeatureExtractor,
@@ -25,6 +26,7 @@ class BuildType(StrEnum):
     IDENTITY = "identity"
     SNV = "snv"
     SAVITZKY_GOLAY = "savgol"
+    GROUP_SEQUENCE = "group_sequence"
     INTERVAL_MEAN = "interval_mean"
     INTERVAL_SLOPE = "interval_slope"
     DWT = "dwt"
@@ -121,6 +123,8 @@ class PreprocessorBuilder:
             return SNVPreprocessor(**params)
         if build_type == BuildType.SAVITZKY_GOLAY:
             return SavitzkyGolayPreprocessor(**params)
+        if build_type == BuildType.GROUP_SEQUENCE:
+            return GroupSequenceFeatureExtractor(**params)
         if build_type == BuildType.INTERVAL_MEAN:
             return IntervalMeanFeatureExtractor(**params)
         if build_type == BuildType.INTERVAL_SLOPE:
