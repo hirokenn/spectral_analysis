@@ -10,6 +10,7 @@ from src.preprocess.interval_features import (
 )
 from src.preprocess.pipeline import PreprocessingPipeline
 from src.preprocess.preprocessor_builder import PreprocessorBuilder
+from src.preprocess.savgol import SavitzkyGolayPreprocessor
 from src.preprocess.snv import SNVPreprocessor
 from src.preprocess.water_band_summary import WaterBandSummaryFeatureExtractor
 
@@ -22,6 +23,7 @@ __all__ = [
     "IntervalSlopeFeatureExtractor",
     "PreprocessingPipeline",
     "PreprocessorBuilder",
+    "SavitzkyGolayPreprocessor",
     "SNVPreprocessor",
     "WaterBandSummaryFeatureExtractor",
 ]

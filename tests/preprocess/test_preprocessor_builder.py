@@ -11,6 +11,7 @@ from src.preprocess.interval_features import (
 )
 from src.preprocess.pipeline import PreprocessingPipeline
 from src.preprocess.preprocessor_builder import PreprocessorBuilder
+from src.preprocess.savgol import SavitzkyGolayPreprocessor
 from src.preprocess.snv import SNVPreprocessor
 from src.preprocess.water_band_summary import WaterBandSummaryFeatureExtractor
 
@@ -75,6 +76,10 @@ def test_build_returns_extended_preprocessors_from_config() -> None:
     builder = PreprocessorBuilder(
         config={
             "snv": {"build_type": "snv", "params": {}},
+            "savgol": {
+                "build_type": "savgol",
+                "params": {"window_length": 5, "polyorder": 2},
+            },
             "interval_mean": {
                 "build_type": "interval_mean",
                 "params": {"interval_size": 2},
@@ -95,6 +100,7 @@ def test_build_returns_extended_preprocessors_from_config() -> None:
     )
 
     assert isinstance(builder.build("snv"), SNVPreprocessor)
+    assert isinstance(builder.build("savgol"), SavitzkyGolayPreprocessor)
     assert isinstance(builder.build("interval_mean"), IntervalMeanFeatureExtractor)
     assert isinstance(builder.build("interval_slope"), IntervalSlopeFeatureExtractor)
     assert isinstance(builder.build("dwt"), DWTFeatureExtractor)

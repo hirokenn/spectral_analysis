@@ -14,6 +14,7 @@ from src.preprocess.interval_features import (
     IntervalSlopeFeatureExtractor,
 )
 from src.preprocess.pipeline import PreprocessingPipeline
+from src.preprocess.savgol import SavitzkyGolayPreprocessor
 from src.preprocess.snv import SNVPreprocessor
 from src.preprocess.water_band_summary import WaterBandSummaryFeatureExtractor
 
@@ -23,6 +24,7 @@ class BuildType(StrEnum):
 
     IDENTITY = "identity"
     SNV = "snv"
+    SAVITZKY_GOLAY = "savgol"
     INTERVAL_MEAN = "interval_mean"
     INTERVAL_SLOPE = "interval_slope"
     DWT = "dwt"
@@ -117,6 +119,8 @@ class PreprocessorBuilder:
             return IdentityPreprocessor(**params)
         if build_type == BuildType.SNV:
             return SNVPreprocessor(**params)
+        if build_type == BuildType.SAVITZKY_GOLAY:
+            return SavitzkyGolayPreprocessor(**params)
         if build_type == BuildType.INTERVAL_MEAN:
             return IntervalMeanFeatureExtractor(**params)
         if build_type == BuildType.INTERVAL_SLOPE:
