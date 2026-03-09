@@ -69,6 +69,7 @@ def make_dataset(
     y: np.ndarray | None,
     sample_id: np.ndarray,
     groups: np.ndarray | None = None,
+    feature_names: list[str] | None = None,
 ) -> Dataset:
     """テスト用 `Dataset` を構築する。"""
     return Dataset(
@@ -77,6 +78,7 @@ def make_dataset(
         groups=None if groups is None else groups.astype(np.int64),
         sample_id=sample_id.astype(np.int64),
         wavenumbers=np.arange(X.shape[1], dtype=np.float32),
+        feature_names=feature_names,
     )
 
 
@@ -89,4 +91,5 @@ def subset(ds: Dataset, indices: list[int]) -> Dataset:
         groups=None if ds.groups is None else ds.groups[idx],
         sample_id=ds.sample_id[idx],
         wavenumbers=ds.wavenumbers.copy(),
+        feature_names=None if ds.feature_names is None else ds.feature_names.copy(),
     )
