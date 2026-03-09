@@ -5,16 +5,28 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
+from src.preprocess.dwt_features import DWTFeatureExtractor
 from src.preprocess.base import BasePreprocessor
 from src.preprocess.feature_union import FeatureUnion
 from src.preprocess.identity import IdentityPreprocessor
+from src.preprocess.interval_features import (
+    IntervalMeanFeatureExtractor,
+    IntervalSlopeFeatureExtractor,
+)
 from src.preprocess.pipeline import PreprocessingPipeline
+from src.preprocess.snv import SNVPreprocessor
+from src.preprocess.water_band_summary import WaterBandSummaryFeatureExtractor
 
 
 class BuildType(StrEnum):
     """PreprocessorBuilder で扱う build_type 定義。"""
 
     IDENTITY = "identity"
+    SNV = "snv"
+    INTERVAL_MEAN = "interval_mean"
+    INTERVAL_SLOPE = "interval_slope"
+    DWT = "dwt"
+    WATER_BAND_SUMMARY = "water_band_summary"
     PIPELINE = "pipeline"
     FEATURE_UNION = "feature_union"
 
@@ -103,6 +115,16 @@ class PreprocessorBuilder:
 
         if build_type == BuildType.IDENTITY:
             return IdentityPreprocessor(**params)
+        if build_type == BuildType.SNV:
+            return SNVPreprocessor(**params)
+        if build_type == BuildType.INTERVAL_MEAN:
+            return IntervalMeanFeatureExtractor(**params)
+        if build_type == BuildType.INTERVAL_SLOPE:
+            return IntervalSlopeFeatureExtractor(**params)
+        if build_type == BuildType.DWT:
+            return DWTFeatureExtractor(**params)
+        if build_type == BuildType.WATER_BAND_SUMMARY:
+            return WaterBandSummaryFeatureExtractor(**params)
 
         raise ValueError(
             f"未対応の build_type です: {build_type} (preprocessor={preprocessor_name})"

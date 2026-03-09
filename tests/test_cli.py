@@ -114,5 +114,5 @@ def test_cli_submission_runs_and_writes_csv(
     assert output_path.exists()
 
     rows = list(csv.reader(output_path.open("r", encoding="utf-8", newline="")))
-    assert rows[0] == ["sample number", "含水率"]
-    assert len(rows) == 3
+    assert len(rows) == 2
+    assert [row[0] for row in rows] == ["10", "11"]

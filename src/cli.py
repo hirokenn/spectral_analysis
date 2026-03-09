@@ -133,7 +133,6 @@ def run_submission(args: argparse.Namespace) -> int:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["sample number", "含水率"])
         for sample_id, pred in zip(test_dataset.sample_id, updated.test_predictions):
             writer.writerow([int(sample_id), float(pred)])
 

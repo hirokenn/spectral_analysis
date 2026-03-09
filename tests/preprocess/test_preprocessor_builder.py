@@ -2,10 +2,17 @@ from __future__ import annotations
 
 import pytest
 
+from src.preprocess.dwt_features import DWTFeatureExtractor
 from src.preprocess.feature_union import FeatureUnion
 from src.preprocess.identity import IdentityPreprocessor
+from src.preprocess.interval_features import (
+    IntervalMeanFeatureExtractor,
+    IntervalSlopeFeatureExtractor,
+)
 from src.preprocess.pipeline import PreprocessingPipeline
 from src.preprocess.preprocessor_builder import PreprocessorBuilder
+from src.preprocess.snv import SNVPreprocessor
+from src.preprocess.water_band_summary import WaterBandSummaryFeatureExtractor
 
 
 def test_build_returns_identity_pipeline_from_config() -> None:
@@ -62,3 +69,33 @@ def test_build_raises_when_preprocessor_definitions_cycle() -> None:
 
     with pytest.raises(ValueError, match="循環参照"):
         builder.build("a")
+
+
+def test_build_returns_extended_preprocessors_from_config() -> None:
+    builder = PreprocessorBuilder(
+        config={
+            "snv": {"build_type": "snv", "params": {}},
+            "interval_mean": {
+                "build_type": "interval_mean",
+                "params": {"interval_size": 2},
+            },
+            "interval_slope": {
+                "build_type": "interval_slope",
+                "params": {"interval_size": 2},
+            },
+            "dwt": {"build_type": "dwt", "params": {"wavelet": "db1", "level": 1}},
+            "water": {
+                "build_type": "water_band_summary",
+                "params": {
+                    "bands": [{"name": "band", "lower": 5000.0, "upper": 5400.0}],
+                    "stats": ["mean"],
+                },
+            },
+        }
+    )
+
+    assert isinstance(builder.build("snv"), SNVPreprocessor)
+    assert isinstance(builder.build("interval_mean"), IntervalMeanFeatureExtractor)
+    assert isinstance(builder.build("interval_slope"), IntervalSlopeFeatureExtractor)
+    assert isinstance(builder.build("dwt"), DWTFeatureExtractor)
+    assert isinstance(builder.build("water"), WaterBandSummaryFeatureExtractor)
