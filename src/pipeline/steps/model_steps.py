@@ -13,6 +13,7 @@ from src.model.trainers.cv_trainer import CVTrainer
 from src.model.trainers.full_trainer import FullTrainer
 from src.pipeline.pipeline import BaseStep
 from src.pipeline.state import PredictState, StateLike, TrainState
+from src.preprocess.preprocessor_builder import PreprocessorBuilder
 from src.recipes.builder import RecipeBuilder
 
 
@@ -32,11 +33,13 @@ class TrainCV(BaseStep):
         self,
         recipe_builder: RecipeBuilder,
         model_builder: ModelBuilder,
+        preprocessor_builder: PreprocessorBuilder,
         recipe_name: str,
     ) -> None:
         super().__init__()
         self.recipe_builder = recipe_builder
         self.model_builder = model_builder
+        self.preprocessor_builder = preprocessor_builder
         self.recipe_name = recipe_name
 
     def execute(self, state: StateLike, **kwargs: Any) -> StateLike:
@@ -53,11 +56,16 @@ class TrainCV(BaseStep):
             Iterable[tuple[Dataset, Dataset]],
             kwargs.get("cv", GroupCV(dataset=dataset)),
         )
-        trainer = CVTrainer(cv=cv, recipe=recipe, model_builder=self.model_builder)
+        trainer = CVTrainer(
+            cv=cv,
+            recipe=recipe,
+            model_builder=self.model_builder,
+            preprocessor_builder=self.preprocessor_builder,
+        )
         result = trainer.run(dataset=dataset)
         train_state.oof_predictions = result.oof_predictions
         train_state.recipe_name = recipe.name
-        preprocessor = recipe.preprocessor_factory()
+        preprocessor = self.preprocessor_builder.build(recipe.preprocessor_name)
         model = self.model_builder.build(recipe.model_name)
         processed_dataset = preprocessor.fit_transform(dataset)
         model.fit(processed_dataset)
@@ -78,11 +86,13 @@ class TrainFull(BaseStep):
         self,
         recipe_builder: RecipeBuilder,
         model_builder: ModelBuilder,
+        preprocessor_builder: PreprocessorBuilder,
         recipe_name: str,
     ) -> None:
         super().__init__()
         self.recipe_builder = recipe_builder
         self.model_builder = model_builder
+        self.preprocessor_builder = preprocessor_builder
         self.recipe_name = recipe_name
 
     def execute(self, state: StateLike, **kwargs: Any) -> StateLike:
@@ -94,7 +104,11 @@ class TrainFull(BaseStep):
         train_state = cast(TrainState, state)
         dataset = _resolve_train_dataset(train_state)
         recipe = self.recipe_builder.build(self.recipe_name)
-        trainer = FullTrainer(recipe=recipe, model_builder=self.model_builder)
+        trainer = FullTrainer(
+            recipe=recipe,
+            model_builder=self.model_builder,
+            preprocessor_builder=self.preprocessor_builder,
+        )
         result = trainer.run(dataset)
 
         train_state.recipe_name = recipe.name

@@ -7,13 +7,19 @@ import numpy as np
 
 from src.pipeline.factory import build_cv_pipeline, build_submission_pipeline
 from src.pipeline.state import TrainState
-from tests.helpers import DummyModelBuilder, make_dataset, make_recipe_builder
+from tests.helpers import (
+    DummyModelBuilder,
+    DummyPreprocessorBuilder,
+    make_dataset,
+    make_recipe_builder,
+)
 
 
 def test_build_cv_pipeline_has_expected_steps() -> None:
     pipeline = build_cv_pipeline(
         recipe_builder=make_recipe_builder(),
         model_builder=DummyModelBuilder(),
+        preprocessor_builder=DummyPreprocessorBuilder(),
         recipe_name="dummy_recipe",
         verbose=False,
     )
@@ -31,6 +37,7 @@ def test_build_submission_pipeline_has_expected_steps() -> None:
     pipeline = build_submission_pipeline(
         recipe_builder=make_recipe_builder(),
         model_builder=DummyModelBuilder(),
+        preprocessor_builder=DummyPreprocessorBuilder(),
         recipe_name="dummy_recipe",
         verbose=False,
     )
@@ -55,6 +62,7 @@ def test_cv_pipeline_runs_end_to_end(tmp_path: Path) -> None:
     pipeline = build_cv_pipeline(
         recipe_builder=make_recipe_builder(),
         model_builder=DummyModelBuilder(),
+        preprocessor_builder=DummyPreprocessorBuilder(),
         recipe_name="dummy_recipe",
         tracking_uri=tracking_uri,
         experiment_name="test_cv_pipeline",
@@ -88,6 +96,7 @@ def test_submission_pipeline_runs_end_to_end(tmp_path: Path) -> None:
     pipeline = build_submission_pipeline(
         recipe_builder=make_recipe_builder(),
         model_builder=DummyModelBuilder(),
+        preprocessor_builder=DummyPreprocessorBuilder(),
         recipe_name="dummy_recipe",
         tracking_uri=tracking_uri,
         experiment_name="test_submission_pipeline",

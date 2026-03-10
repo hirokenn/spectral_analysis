@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from src.model.model_builder import ModelBuilder
+from src.model.regressors.lightgbm import LightGBMRegressor
 from src.model.regressors.pls import PLSRegressor
 
 
@@ -46,3 +47,20 @@ def test_build_raises_when_model_name_is_missing() -> None:
 
     with pytest.raises(ValueError, match="モデル定義が見つかりません"):
         builder.build("unknown_model")
+
+
+def test_build_returns_lightgbm_with_params_from_config() -> None:
+    builder = ModelBuilder(
+        config={
+            "base_lgbm": {
+                "build_type": "lightgbm",
+                "params": {"n_estimators": 10, "learning_rate": 0.1},
+            }
+        }
+    )
+
+    model = builder.build("base_lgbm")
+
+    assert isinstance(model, LightGBMRegressor)
+    assert model.params["n_estimators"] == 10
+    assert model.params["learning_rate"] == 0.1

@@ -8,8 +8,7 @@ import numpy as np
 from src.data.dataset import Dataset
 from src.model.base_model import ModelType
 from src.model.model_builder import ModelBuilder
-from src.preprocess.identity import IdentityPreprocessor
-from src.preprocess.pipeline import PreprocessingPipeline
+from src.preprocess.preprocessor_builder import PreprocessorBuilder
 from src.recipes.base import Recipe
 from src.recipes.builder import RecipeBuilder
 
@@ -49,11 +48,26 @@ class DummyModelBuilder(ModelBuilder):
         return DummyMeanModel()
 
 
+class DummyPreprocessorBuilder(PreprocessorBuilder):
+    """常に identity 前処理を解決できるテスト用 builder。"""
+
+    def __init__(self) -> None:
+        super().__init__(
+            config={
+                "identity": {"build_type": "identity", "params": {}},
+                "identity_pipeline": {
+                    "build_type": "pipeline",
+                    "steps": ["identity"],
+                },
+            }
+        )
+
+
 def make_recipe(recipe_name: str = "dummy_recipe") -> Recipe:
     """Identity 前処理を使うテスト用 recipe を返す。"""
     return Recipe(
         name=recipe_name,
-        preprocessor_factory=lambda: PreprocessingPipeline() >> IdentityPreprocessor(),
+        preprocessor_name="identity_pipeline",
         model_name="dummy_model",
     )
 
@@ -69,6 +83,7 @@ def make_dataset(
     y: np.ndarray | None,
     sample_id: np.ndarray,
     groups: np.ndarray | None = None,
+    feature_names: list[str] | None = None,
 ) -> Dataset:
     """テスト用 `Dataset` を構築する。"""
     return Dataset(
@@ -77,6 +92,7 @@ def make_dataset(
         groups=None if groups is None else groups.astype(np.int64),
         sample_id=sample_id.astype(np.int64),
         wavenumbers=np.arange(X.shape[1], dtype=np.float32),
+        feature_names=feature_names,
     )
 
 
@@ -89,4 +105,5 @@ def subset(ds: Dataset, indices: list[int]) -> Dataset:
         groups=None if ds.groups is None else ds.groups[idx],
         sample_id=ds.sample_id[idx],
         wavenumbers=ds.wavenumbers.copy(),
+        feature_names=None if ds.feature_names is None else ds.feature_names.copy(),
     )

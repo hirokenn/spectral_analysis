@@ -1,0 +1,113 @@
+{
+    "identity": {
+        "build_type": "identity",
+        "params": {}
+    },
+    "snv": {
+        "build_type": "snv",
+        "params": {}
+    },
+    "savgol_smoothing": {
+        "build_type": "savgol",
+        "params": {
+            "window_length": 11,
+            "polyorder": 3,
+            "mode": "interp"
+        }
+    },
+    "interval_mean_100": {
+        "build_type": "interval_mean",
+        "params": {
+            "interval_size": 100
+        }
+    },
+    "interval_slope_100": {
+        "build_type": "interval_slope",
+        "params": {
+            "interval_size": 100
+        }
+    },
+    "dwt_db4_level3": {
+        "build_type": "dwt",
+        "params": {
+            "wavelet": "db4",
+            "level": 3,
+            "mode": "symmetric",
+            "include_approximation": true,
+            "include_details": true,
+            "summary_stats": [
+                "mean",
+                "std",
+                "energy"
+            ]
+        }
+    },
+    "water_band_summary_default": {
+        "build_type": "water_band_summary",
+        "params": {
+            "bands": [
+                {
+                    "name": "water_7000",
+                    "lower": 6800.0,
+                    "upper": 7200.0
+                },
+                {
+                    "name": "water_5200",
+                    "lower": 5000.0,
+                    "upper": 5400.0
+                }
+            ],
+            "stats": [
+                "mean",
+                "std",
+                "min",
+                "max",
+                "area"
+            ]
+        }
+    },
+    "group_sequence_features_default": {
+        "build_type": "group_sequence",
+        "params": {
+            "target_wavenumbers": [
+                5200.0,
+                7000.0
+            ],
+            "rolling_window": 5
+        }
+    },
+    "snv_lgbm_spectral_union": {
+        "build_type": "feature_union",
+        "branches": [
+            "interval_mean_100",
+            "interval_slope_100",
+            "dwt_db4_level3",
+            "water_band_summary_default"
+        ]
+    },
+    "base_identity_pipeline": {
+        "build_type": "pipeline",
+        "steps": ["identity"]
+    },
+    "snv_lgbm_pipeline": {
+        "build_type": "feature_union",
+        "branches": [
+            "snv_lgbm_snv_branch",
+            "group_sequence_features_default"
+        ]
+    },
+    "snv_lgbm_snv_branch": {
+        "build_type": "pipeline",
+        "steps": [
+            "snv",
+            "snv_lgbm_spectral_union"
+        ]
+    },
+    "savgol_lgbm_pipeline": {
+        "build_type": "pipeline",
+        "steps": [
+            "savgol_smoothing",
+            "snv_lgbm_spectral_union"
+        ]
+    }
+}

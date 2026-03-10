@@ -17,6 +17,7 @@ from src.pipeline.steps.model_steps import (
 from tests.helpers import (
     DummyMeanModel,
     DummyModelBuilder,
+    DummyPreprocessorBuilder,
     make_dataset,
     make_recipe_builder,
     subset,
@@ -38,6 +39,7 @@ def test_train_cv_updates_oof_predictions() -> None:
     step = TrainCV(
         recipe_builder=make_recipe_builder(),
         model_builder=DummyModelBuilder(),
+        preprocessor_builder=DummyPreprocessorBuilder(),
         recipe_name="dummy_recipe",
     )
 
@@ -64,6 +66,7 @@ def test_train_cv_averages_when_sample_appears_multiple_times() -> None:
     step = TrainCV(
         recipe_builder=make_recipe_builder(),
         model_builder=DummyModelBuilder(),
+        preprocessor_builder=DummyPreprocessorBuilder(),
         recipe_name="dummy_recipe",
     )
 
@@ -85,6 +88,7 @@ def test_train_full_sets_fitted_model_and_preprocessor() -> None:
     step = TrainFull(
         recipe_builder=make_recipe_builder(),
         model_builder=DummyModelBuilder(),
+        preprocessor_builder=DummyPreprocessorBuilder(),
         recipe_name="dummy_recipe",
     )
 
@@ -112,6 +116,7 @@ def test_predict_test_updates_predictions() -> None:
     train_step = TrainFull(
         recipe_builder=make_recipe_builder(),
         model_builder=DummyModelBuilder(),
+        preprocessor_builder=DummyPreprocessorBuilder(),
         recipe_name="dummy_recipe",
     )
     predict_step = PredictTest()
@@ -226,6 +231,7 @@ def test_train_cv_then_plot_oof_includes_feature_importance(
     train_step = TrainCV(
         recipe_builder=make_recipe_builder(),
         model_builder=FeatureImportanceModelBuilder(),
+        preprocessor_builder=DummyPreprocessorBuilder(),
         recipe_name="dummy_recipe",
     )
     plot_step = PlotOOF()
