@@ -6,6 +6,13 @@
             "scale": true
         }
     },
+    "snv_pls": {
+        "build_type": "pls",
+        "params": {
+            "n_components": 8,
+            "scale": true
+        }
+    },
     "snv_lgbm": {
         "build_type": "lightgbm",
         "params": {

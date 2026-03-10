@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from src.data.dataset import Dataset
 from src.model.base_model import BaseModel
 from src.model.model_builder import ModelBuilder
+from src.model.target_transform import BaseTargetTransformer, build_target_transformer
 from src.preprocess.core.base import BasePreprocessor
 from src.preprocess.core.preprocessor_builder import PreprocessorBuilder
 from src.recipes.base import Recipe
@@ -16,6 +17,7 @@ class TrainFullResult:
 
     preprocessor: BasePreprocessor
     model: BaseModel
+    target_transformer: BaseTargetTransformer
 
 
 @dataclass
@@ -33,6 +35,15 @@ class FullTrainer:
 
         preprocessor = self.preprocessor_builder.build(self.recipe.preprocessor_name)
         model = self.model_builder.build(self.recipe.model_name)
+        target_transformer = build_target_transformer(self.recipe.target_transform_name)
+        target_transformer.fit(dataset.y)
         processed_dataset = preprocessor.fit_transform(dataset)
-        model.fit(processed_dataset)
-        return TrainFullResult(preprocessor=preprocessor, model=model)
+        transformed_dataset = processed_dataset.with_target(
+            target_transformer.transform(dataset.y)
+        )
+        model.fit(transformed_dataset)
+        return TrainFullResult(
+            preprocessor=preprocessor,
+            model=model,
+            target_transformer=target_transformer,
+        )

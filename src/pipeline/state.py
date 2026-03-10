@@ -7,6 +7,7 @@ import numpy as np
 
 from src.data.dataset import Dataset
 from src.model.base_model import BaseModel, ModelType
+from src.model.target_transform import BaseTargetTransformer
 
 if TYPE_CHECKING:
     from src.preprocess.core.base import BasePreprocessor
@@ -26,6 +27,7 @@ class BaseState:
     model_type: ModelType | None = None
     model: BaseModel | None = None
     preprocessor: BasePreprocessor | None = None
+    target_transformer: BaseTargetTransformer | None = None
     model_uri: str | None = None
     run_id: str | None = None
     test_predictions: np.ndarray | None = None

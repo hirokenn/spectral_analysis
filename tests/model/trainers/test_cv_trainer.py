@@ -37,3 +37,29 @@ def test_cv_trainer_returns_expected_oof_predictions() -> None:
     assert result.n_splits == 2
     assert result.covered_count == 4
     assert result.sample_count == 4
+
+
+def test_cv_trainer_inverts_log1p_transformed_oof_predictions() -> None:
+    ds = make_dataset(
+        X=np.array([[0.0], [1.0], [2.0], [3.0]]),
+        y=np.array([1.0, 2.0, 3.0, 4.0]),
+        groups=np.array([1, 1, 2, 2]),
+        sample_id=np.array([10, 11, 12, 13]),
+    )
+    cv = [
+        (subset(ds, [0, 1]), subset(ds, [2, 3])),
+        (subset(ds, [2, 3]), subset(ds, [0, 1])),
+    ]
+    trainer = CVTrainer(
+        cv=cv,
+        recipe=make_recipe(target_transform_name="log1p"),
+        model_builder=DummyModelBuilder(),
+        preprocessor_builder=DummyPreprocessorBuilder(),
+    )
+
+    result = trainer.run(ds)
+
+    lower = np.expm1(np.mean(np.log1p(np.array([1.0, 2.0], dtype=np.float32))))
+    upper = np.expm1(np.mean(np.log1p(np.array([3.0, 4.0], dtype=np.float32))))
+    expected = np.array([upper, upper, lower, lower], dtype=np.float32)
+    np.testing.assert_allclose(result.oof_predictions, expected)

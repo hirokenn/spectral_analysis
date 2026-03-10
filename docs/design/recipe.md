@@ -91,6 +91,9 @@ RECIPES["my_pls"] = Recipe(
 - `base_pls`
   - `preprocessor_name="base_identity_pipeline"`
   - `model_name="base_pls"`
+- `snv_pls`
+  - `preprocessor_name="snv_pls_pipeline"`
+  - `model_name="snv_pls"`
 - `snv_lgbm`
   - `preprocessor_name="snv_lgbm_pipeline"`
   - `model_name="snv_lgbm"`

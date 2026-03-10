@@ -89,6 +89,10 @@
         "build_type": "pipeline",
         "steps": ["identity"]
     },
+    "snv_pls_pipeline": {
+        "build_type": "pipeline",
+        "steps": ["snv"]
+    },
     "snv_lgbm_pipeline": {
         "build_type": "feature_union",
         "branches": [
