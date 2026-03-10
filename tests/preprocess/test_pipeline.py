@@ -5,10 +5,10 @@ from dataclasses import dataclass
 import numpy as np
 
 from src.data.dataset import Dataset
-from src.preprocess.base import ComposablePreprocessor
-from src.preprocess.feature_union import FeatureUnion
-from src.preprocess.identity import IdentityPreprocessor
-from src.preprocess.pipeline import PreprocessingPipeline
+from src.preprocess.core.base import ComposablePreprocessor
+from src.preprocess.core.feature_union import FeatureUnion
+from src.preprocess.core.pipeline import PreprocessingPipeline
+from src.preprocess.transforms.identity import IdentityPreprocessor
 from tests.helpers import make_dataset
 
 

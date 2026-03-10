@@ -33,8 +33,8 @@ CV では fold ごとに新しい前処理器を作る必要があります。
 既定の recipe は `src/recipes/default_recipes.py` に定義します。
 
 ```python
-from src.preprocess.identity import IdentityPreprocessor
-from src.preprocess.pipeline import PreprocessingPipeline
+from src.preprocess.transforms.identity import IdentityPreprocessor
+from src.preprocess.core.pipeline import PreprocessingPipeline
 from src.recipes.base import Recipe
 
 

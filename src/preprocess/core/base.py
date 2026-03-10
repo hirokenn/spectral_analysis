@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Protocol, cast, runtime_checkable
 from src.data.dataset import Dataset
 
 if TYPE_CHECKING:
-    from src.preprocess.pipeline import PreprocessingPipeline
+    from src.preprocess.core.pipeline import PreprocessingPipeline
 
 
 @runtime_checkable
@@ -26,6 +26,6 @@ class ComposablePreprocessor:
         self, other: BasePreprocessor | "PreprocessingPipeline"
     ) -> "PreprocessingPipeline":
         """右辺と連結した `PreprocessingPipeline` を返す。"""
-        from src.preprocess.pipeline import PreprocessingPipeline
+        from src.preprocess.core.pipeline import PreprocessingPipeline
 
         return PreprocessingPipeline() >> cast(BasePreprocessor, self) >> other

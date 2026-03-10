@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from src.data.dataset import Dataset
-from src.preprocess.base import BasePreprocessor, ComposablePreprocessor
+from src.preprocess.core.base import BasePreprocessor, ComposablePreprocessor
 
 
 @dataclass

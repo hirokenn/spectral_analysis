@@ -9,7 +9,7 @@ from src.data.dataset import Dataset
 from src.model.base_model import BaseModel, ModelType
 
 if TYPE_CHECKING:
-    from src.preprocess.base import BasePreprocessor
+    from src.preprocess.core.base import BasePreprocessor
 
 
 @dataclass
