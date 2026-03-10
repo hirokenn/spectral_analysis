@@ -53,3 +53,14 @@ def test_pls_predict_raises_before_fit() -> None:
 
     with pytest.raises(ValueError, match="未学習"):
         model.predict(ds)
+
+
+def test_pls_feature_importance_uses_dataset_feature_names() -> None:
+    model = PLSRegressor(n_components=2)
+    ds = make_dataset(with_target=True)
+
+    model.fit(ds)
+    feature_importance = model.feature_importance()
+
+    assert feature_importance is not None
+    assert list(feature_importance.keys()) == ["10000.0", "9990.0", "9980.0"]

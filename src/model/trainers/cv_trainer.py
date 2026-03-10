@@ -7,6 +7,7 @@ import numpy as np
 
 from src.data.dataset import Dataset
 from src.model.model_builder import ModelBuilder
+from src.preprocess.core.preprocessor_builder import PreprocessorBuilder
 from src.recipes.base import Recipe
 
 
@@ -27,6 +28,7 @@ class CVTrainer:
     cv: Iterable[tuple[Dataset, Dataset]]
     recipe: Recipe
     model_builder: ModelBuilder
+    preprocessor_builder: PreprocessorBuilder
 
     def run(self, dataset: Dataset) -> TrainCVResult:
         """CV を回して OOF 予測を返す。"""
@@ -42,7 +44,9 @@ class CVTrainer:
 
         n_splits = 0
         for train_ds, valid_ds in self.cv:
-            preprocessor = self.recipe.preprocessor_factory()
+            preprocessor = self.preprocessor_builder.build(
+                self.recipe.preprocessor_name
+            )
             model = self.model_builder.build(self.recipe.model_name)
 
             processed_train_ds = preprocessor.fit_transform(train_ds)

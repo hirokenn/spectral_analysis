@@ -11,43 +11,39 @@ CV 学習と提出用学習で同じ条件を再利用するために使いま�
 @dataclass(frozen=True)
 class Recipe:
     name: str
-    preprocessor_factory: Callable[[], BasePreprocessor]
+    preprocessor_name: str
     model_name: str
 ```
 
 持っている情報はシンプルです。
 
 - `name`: recipe 名
-- `preprocessor_factory`: 前処理パイプラインを毎回新しく作る関数
+- `preprocessor_name`: `PreprocessorBuilder` に渡す前処理設定名
 - `model_name`: `ModelBuilder` に渡すモデル名
 
-## なぜ factory にしているか
+## なぜ名前参照にしているか
 
-CV では fold ごとに新しい前処理器を作る必要があります。  
-前処理器インスタンスそのものを `Recipe` に持たせると、学習済み状態が fold 間で共有される危険があります。
+前処理の構造は `preprocess_params.json`、モデルの構造は `params.json` に分離しています。  
+`Recipe` はその参照名だけを持つため、次の利点があります。
 
-そのため、`preprocessor_factory` で毎回新しい前処理パイプラインを返す形にしています。
+- `Recipe` 自体を小さく保てる
+- 同じ前処理ノードを複数 recipe で共有できる
+- CLI 側は recipe 名だけ知っていれば実行できる
+- CV の fold ごとに `Builder` が毎回新しいインスタンスを作れる
 
 ## 定義場所
 
 既定の recipe は `src/recipes/default_recipes.py` に定義します。
 
 ```python
-from src.preprocess.identity import IdentityPreprocessor
-from src.preprocess.pipeline import PreprocessingPipeline
 from src.recipes.base import Recipe
-
-
-def make_identity_pipeline() -> PreprocessingPipeline:
-    return PreprocessingPipeline() >> IdentityPreprocessor()
-
 
 RECIPES = {
     "base_pls": Recipe(
         name="base_pls",
-        preprocessor_factory=make_identity_pipeline,
+        preprocessor_name="base_identity_pipeline",
         model_name="base_pls",
-    ),
+    )
 }
 ```
 
@@ -65,7 +61,7 @@ recipe = RecipeBuilder().build("base_pls")
 
 CV 学習では `TrainCV` 内で recipe が使われます。
 
-- fold ごとに `recipe.preprocessor_factory()` を呼ぶ
+- fold ごとに `recipe.preprocessor_name` を `PreprocessorBuilder` に渡す
 - `recipe.model_name` を使って `ModelBuilder` からモデルを作る
 
 提出用学習でも同じ recipe を使うため、CV と提出で条件のずれを防げます。
@@ -74,29 +70,46 @@ CV 学習では `TrainCV` 内で recipe が使われます。
 
 新しい recipe を追加する手順は次の通りです。
 
-1. 必要な前処理パイプラインを関数で定義する
-2. `RECIPES` に `Recipe(...)` を追加する
-3. `model_name` には `params.json` に存在するモデル名を指定する
+1. `preprocess_params.json` に前処理名を定義する
+2. `params.json` にモデル名を定義する
+3. `RECIPES` に `Recipe(...)` を追加する
 
 例:
 
 ```python
-def make_my_pipeline() -> PreprocessingPipeline:
-    return PreprocessingPipeline() >> IdentityPreprocessor()
-
-
 RECIPES["my_pls"] = Recipe(
     name="my_pls",
-    preprocessor_factory=make_my_pipeline,
+    preprocessor_name="my_preprocessor_pipeline",
     model_name="base_pls",
 )
 ```
+
+## 現在の recipe
+
+現在の既定 recipe は次の通りです。
+
+- `base_pls`
+  - `preprocessor_name="base_identity_pipeline"`
+  - `model_name="base_pls"`
+- `snv_lgbm`
+  - `preprocessor_name="snv_lgbm_pipeline"`
+  - `model_name="snv_lgbm"`
+- `savgol_lgbm`
+  - `preprocessor_name="savgol_lgbm_pipeline"`
+  - `model_name="savgol_lgbm"`
+
+`snv_lgbm` は `FeatureUnion` を使って、
+- `SNV` 後のスペクトル特徴
+- グループ内順序由来の特徴
+
+を結合する構成です。
 
 ## 設計上の意図
 
 この設計は、次の点を重視しています。
 
-- JSON に前処理の複雑な構造を書かなくてよい
-- Python なので型補完や refactor が効く
+- recipe 自体はシンプルな参照オブジェクトに保つ
+- 前処理とモデルの詳細は JSON に分離して再利用しやすくする
+- recipe 名を CLI / 実験管理の識別子として使いやすくする
 - CV と提出用で同じ recipe をそのまま使える
 - 前処理やモデル構成を増やしても責務が分かれたまま保てる

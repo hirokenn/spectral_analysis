@@ -10,6 +10,7 @@ from src.pipeline.steps.model_steps import (
     TrainFull,
 )
 from src.pipeline.steps.run_step import MlflowEndRun, MlflowStartRun
+from src.preprocess.core.preprocessor_builder import PreprocessorBuilder
 from src.recipes.builder import RecipeBuilder
 
 
@@ -17,6 +18,7 @@ def build_cv_pipeline(
     *,
     recipe_builder: RecipeBuilder,
     model_builder: ModelBuilder,
+    preprocessor_builder: PreprocessorBuilder,
     recipe_name: str,
     run_name: str | None = None,
     tracking_uri: str | None = "sqlite:///mlflow.db",
@@ -34,6 +36,7 @@ def build_cv_pipeline(
         >> TrainCV(
             recipe_builder=recipe_builder,
             model_builder=model_builder,
+            preprocessor_builder=preprocessor_builder,
             recipe_name=recipe_name,
         )
         >> EvaluateOOF()
@@ -49,6 +52,7 @@ def build_submission_pipeline(
     *,
     recipe_builder: RecipeBuilder,
     model_builder: ModelBuilder,
+    preprocessor_builder: PreprocessorBuilder,
     recipe_name: str,
     run_name: str | None = None,
     tracking_uri: str | None = "sqlite:///mlflow.db",
@@ -65,6 +69,7 @@ def build_submission_pipeline(
         >> TrainFull(
             recipe_builder=recipe_builder,
             model_builder=model_builder,
+            preprocessor_builder=preprocessor_builder,
             recipe_name=recipe_name,
         )
         >> PredictTest()

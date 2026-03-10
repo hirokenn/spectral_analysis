@@ -1,19 +1,21 @@
 from __future__ import annotations
 
-from src.preprocess.identity import IdentityPreprocessor
-from src.preprocess.pipeline import PreprocessingPipeline
 from src.recipes.base import Recipe
-
-
-def make_identity_pipeline() -> PreprocessingPipeline:
-    """既定の no-op 前処理パイプラインを返す。"""
-    return PreprocessingPipeline() >> IdentityPreprocessor()
-
 
 RECIPES: dict[str, Recipe] = {
     "base_pls": Recipe(
         name="base_pls",
-        preprocessor_factory=make_identity_pipeline,
+        preprocessor_name="base_identity_pipeline",
         model_name="base_pls",
+    ),
+    "snv_lgbm": Recipe(
+        name="snv_lgbm",
+        preprocessor_name="snv_lgbm_pipeline",
+        model_name="snv_lgbm",
+    ),
+    "savgol_lgbm": Recipe(
+        name="savgol_lgbm",
+        preprocessor_name="savgol_lgbm_pipeline",
+        model_name="savgol_lgbm",
     ),
 }

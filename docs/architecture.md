@@ -17,7 +17,7 @@
 このプロジェクトの全体設計は、次の考え方に基づいています。
 
 - `Dataset` を中心にデータの入出力を統一する
-- 前処理とモデル条件は `Recipe` にまとめる
+- 前処理とモデル条件は `Recipe` と JSON 設定に分離する
 - 実行処理は小さな `Step` に分解し、`>>` で `Pipeline` を構築する
 - CV 学習と全件学習で同じ recipe を使い、条件のずれを防ぐ
 - 学習結果や評価値は `State` に集約し、Step 間で受け渡す
@@ -42,6 +42,9 @@ src/
   model/
   pipeline/
   preprocess/
+    core/
+    transforms/
+    features/
   recipes/
 
 tests/
@@ -67,15 +70,26 @@ tests/
 
 ### `src/preprocess`
 
-前処理の共通インターフェースとパイプライン合成を担当します。
+前処理の共通インターフェース、スペクトル変換、特徴量抽出を担当します。
 
-- `base.py`
-  - `BasePreprocessor` を定義
-- `identity.py`
-  - no-op 前処理
-- `pipeline.py`
-  - `PreprocessingPipeline`
-  - `>>` による前処理連結
+- `core/`
+  - `base.py`
+    - `BasePreprocessor`, `ComposablePreprocessor`
+  - `pipeline.py`
+    - `PreprocessingPipeline`
+  - `feature_union.py`
+    - 複数 branch の特徴量横結合
+  - `preprocessor_builder.py`
+    - `preprocess_params.json` から前処理を構築
+- `transforms/`
+  - `identity.py`
+  - `snv.py`
+  - `savgol.py`
+- `features/`
+  - `interval_features.py`
+  - `dwt_features.py`
+  - `water_band_summary.py`
+  - `group_sequence_features.py`
 
 ### `src/model`
 
@@ -98,7 +112,7 @@ tests/
 
 ### `src/recipes`
 
-前処理とモデル条件をまとめた recipe を担当します。
+前処理名とモデル名をまとめた recipe 定義を担当します。
 
 - `base.py`
   - `Recipe`
@@ -150,13 +164,13 @@ CLI エントリポイントです。
 
 ### `Recipe`
 
-前処理とモデル条件をまとめた実行単位です。
+前処理名とモデル名をまとめた実行単位です。
 
 - `name`
-- `preprocessor_factory`
+- `preprocessor_name`
 - `model_name`
 
-CV と提出用パイプラインの両方で同じ recipe を使うため、条件の再現性を保ちやすくなっています。
+前処理本体の構成は `preprocess_params.json`、モデル本体の構成は `params.json` にあり、`Recipe` はその参照名だけを持ちます。
 
 ### `State`
 
@@ -192,9 +206,10 @@ train.csv
 内部では `TrainCV` が以下を行います。
 
 - `RecipeBuilder` から recipe を取得
-- fold ごとに `preprocessor_factory()` で前処理器を作る
+- fold ごとに `PreprocessorBuilder` で前処理器を作る
 - `ModelBuilder` でモデルを生成
 - OOF 予測を作成して `state.oof_predictions` に保存
+- OOF 作成後、同じ recipe で全件再学習したモデルを `state.model` に保存
 
 ### 2. 提出用予測フロー
 
@@ -223,7 +238,9 @@ CLI
       -> model.plot
     -> recipes.builder
       -> recipes.default_recipes
-        -> preprocess
+    -> preprocess.core.preprocessor_builder
+      -> preprocess.transforms
+      -> preprocess.features
     -> model.model_builder
       -> model.regressors
   -> data.dataset
@@ -241,8 +258,9 @@ CLI
 
 ### 新しい前処理を追加したい場合
 
-- `src/preprocess/` に前処理クラスを追加
-- `Recipe` の `preprocessor_factory` に組み込む
+- `src/preprocess/transforms/` または `src/preprocess/features/` に前処理クラスを追加
+- `src/preprocess/core/preprocessor_builder.py` の build 分岐を追加
+- `preprocess_params.json` から参照できるようにする
 
 ### 新しいモデルを追加したい場合
 
@@ -253,6 +271,8 @@ CLI
 ### 新しい recipe を追加したい場合
 
 - `src/recipes/default_recipes.py` に recipe を追加
+- `Recipe.preprocessor_name` が参照する前処理を `preprocess_params.json` に追加
+- `Recipe.model_name` が参照するモデルを `params.json` に追加
 
 ### 新しい Step を追加したい場合
 
