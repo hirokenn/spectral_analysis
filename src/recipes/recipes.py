@@ -24,20 +24,14 @@ def _register_standard_recipe(
     *,
     name: str,
     preprocessor_name: str,
-    add_log1p_variant: bool = False,
+    model_name: str | None = None,
 ) -> None:
-    """通常レシピと必要なら log1p 版を登録する。"""
+    """通常レシピを登録する。"""
     recipes[name] = _make_recipe(
         name,
         preprocessor_name=preprocessor_name,
+        model_name=model_name,
     )
-    if add_log1p_variant:
-        recipes[f"{name}_log1p"] = _make_recipe(
-            f"{name}_log1p",
-            preprocessor_name=preprocessor_name,
-            model_name=name,
-            target_transform_name="log1p",
-        )
 
 
 def _build_default_recipes() -> dict[str, Recipe]:
@@ -57,13 +51,29 @@ def _build_default_recipes() -> dict[str, Recipe]:
         recipes,
         name="snv_lgbm",
         preprocessor_name="snv_lgbm_pipeline",
-        add_log1p_variant=True,
+    )
+    _register_standard_recipe(
+        recipes,
+        name="snv_lgbm_with_raw_pls_oof",
+        preprocessor_name="snv_lgbm_with_raw_pls_oof_pipeline",
+        model_name="snv_lgbm",
+    )
+    recipes["snv_lgbm_log1p"] = _make_recipe(
+        "snv_lgbm_log1p",
+        preprocessor_name="snv_lgbm_pipeline",
+        model_name="snv_lgbm",
+        target_transform_name="log1p",
     )
     _register_standard_recipe(
         recipes,
         name="savgol_lgbm",
         preprocessor_name="savgol_lgbm_pipeline",
-        add_log1p_variant=True,
+    )
+    recipes["savgol_lgbm_log1p"] = _make_recipe(
+        "savgol_lgbm_log1p",
+        preprocessor_name="savgol_lgbm_pipeline",
+        model_name="savgol_lgbm",
+        target_transform_name="log1p",
     )
     recipes["base_pls_snv_lgbm_residual"] = _make_recipe(
         "base_pls_snv_lgbm_residual",

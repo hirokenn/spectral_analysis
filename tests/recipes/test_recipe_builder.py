@@ -49,3 +49,12 @@ def test_recipe_builder_contains_residual_recipe_in_default_recipes() -> None:
     assert recipe.preprocessor_name == "base_identity_pipeline"
     assert recipe.model_name == "base_pls_snv_lgbm_residual"
     assert recipe.target_transform_name == "identity"
+
+
+def test_recipe_builder_contains_pls_oof_feature_recipe_in_default_recipes() -> None:
+    """デフォルトレシピに PLS OOF 特徴量追加版が含まれていることを確認する。"""
+    recipe = RecipeBuilder().build("snv_lgbm_with_raw_pls_oof")
+
+    assert recipe.name == "snv_lgbm_with_raw_pls_oof"
+    assert recipe.preprocessor_name == "snv_lgbm_with_raw_pls_oof_pipeline"
+    assert recipe.model_name == "snv_lgbm"

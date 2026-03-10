@@ -80,6 +80,14 @@
             "rolling_window": 5
         }
     },
+    "raw_pls_oof_feature": {
+        "build_type": "pls_oof_feature",
+        "params": {
+            "n_components": 8,
+            "scale": true,
+            "feature_name": "raw_pls_oof_pred"
+        }
+    },
     "snv_lgbm_spectral_union": {
         "build_type": "feature_union",
         "branches": [
@@ -102,6 +110,14 @@
         "branches": [
             "snv_lgbm_snv_branch",
             "group_sequence_features_default"
+        ]
+    },
+    "snv_lgbm_with_raw_pls_oof_pipeline": {
+        "build_type": "feature_union",
+        "branches": [
+            "snv_lgbm_snv_branch",
+            "group_sequence_features_default",
+            "raw_pls_oof_feature"
         ]
     },
     "snv_lgbm_snv_branch": {

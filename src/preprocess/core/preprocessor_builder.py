@@ -16,6 +16,7 @@ from src.preprocess.features.interval_features import (
     IntervalMeanFeatureExtractor,
     IntervalSlopeFeatureExtractor,
 )
+from src.preprocess.features.pls_oof_feature import PLSOOFFeatureExtractor
 from src.preprocess.features.water_band_summary import WaterBandSummaryFeatureExtractor
 from src.preprocess.transforms.identity import IdentityPreprocessor
 from src.preprocess.transforms.savgol import SavitzkyGolayPreprocessor
@@ -33,6 +34,7 @@ class BuildType(StrEnum):
     INTERVAL_SLOPE = "interval_slope"
     DWT = "dwt"
     WATER_BAND_SUMMARY = "water_band_summary"
+    PLS_OOF_FEATURE = "pls_oof_feature"
     PIPELINE = "pipeline"
     FEATURE_UNION = "feature_union"
 
@@ -135,6 +137,8 @@ class PreprocessorBuilder:
             return DWTFeatureExtractor(**params)
         if build_type == BuildType.WATER_BAND_SUMMARY:
             return WaterBandSummaryFeatureExtractor(**params)
+        if build_type == BuildType.PLS_OOF_FEATURE:
+            return PLSOOFFeatureExtractor(**params)
 
         raise ValueError(
             f"未対応の build_type です: {build_type} (preprocessor={preprocessor_name})"
