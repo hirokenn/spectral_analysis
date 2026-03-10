@@ -5,7 +5,7 @@ from typing import Any, Iterable, cast
 import mlflow  # type: ignore[import-untyped]
 
 from src.data.dataset import Dataset
-from src.data.group_cv import GroupCV
+from src.data.group_cv import LOSOCV
 from src.model.eval import OOFEvaluator
 from src.model.model_builder import ModelBuilder
 from src.model.plot import OOFPlotter
@@ -54,7 +54,7 @@ class TrainCV(BaseStep):
         recipe = self.recipe_builder.build(self.recipe_name)
         cv = cast(
             Iterable[tuple[Dataset, Dataset]],
-            kwargs.get("cv", GroupCV(dataset=dataset)),
+            kwargs.get("cv", LOSOCV(dataset=dataset)),
         )
         trainer = CVTrainer(
             cv=cv,
