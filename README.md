@@ -23,6 +23,16 @@
 - [`docs/data_info.md`](docs/data_info.md): データの基本情報
 - [`docs/knowledge.md`](docs/knowledge.md): 背景知識
 
+## 現在の主要 recipe
+
+現時点で利用できる代表 recipe は次の 3 つです。
+
+- `base_pls`: 生スペクトルをそのまま `PLS` に入力する基準線
+- `snv_lgbm`: `SNV` 後のスペクトル特徴に加え、グループ内順序由来の特徴を結合して `LightGBM` に入力する構成
+- `savgol_lgbm`: `Savitzky-Golay` 平滑化後のスペクトル特徴を `LightGBM` に入力する構成
+
+前処理の詳細は `preprocess_params.json`、モデルの詳細は `params.json` で管理しています。
+
 ## このコンペで難しい点・注意点
 
 - `train.csv` と `test.csv` で出現する樹種が非重複であり、未知樹種への汎化性能が重要です。
@@ -81,8 +91,10 @@ CLI は `uv run spectral-analysis` から実行できます。
 
 ```bash
 uv run spectral-analysis cv \
-  --recipe-name base_pls
+  --recipe-name snv_lgbm
 ```
+
+利用可能な `--recipe-name` は `base_pls`、`snv_lgbm`、`savgol_lgbm` です。
 
 必要に応じて以下も指定できます。
 
@@ -98,7 +110,7 @@ uv run spectral-analysis cv \
 
 ```bash
 uv run spectral-analysis submission \
-  --recipe-name base_pls
+  --recipe-name snv_lgbm
 ```
 
 `--train-path` は省略時に `data/train.csv`、`--test-path` は省略時に `data/test.csv` が使われます。  

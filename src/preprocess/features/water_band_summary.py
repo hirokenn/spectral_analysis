@@ -6,7 +6,7 @@ from typing import Any
 import numpy as np
 
 from src.data.dataset import Dataset
-from src.preprocess.base import ComposablePreprocessor
+from src.preprocess.core.base import ComposablePreprocessor
 
 DEFAULT_WATER_BANDS: tuple[dict[str, Any], ...] = (
     {"name": "water_7000", "lower": 6800.0, "upper": 7200.0},

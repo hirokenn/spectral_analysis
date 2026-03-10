@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from src.data.dataset import Dataset
 from src.model.base_model import BaseModel
 from src.model.model_builder import ModelBuilder
-from src.preprocess.base import BasePreprocessor
-from src.preprocess.preprocessor_builder import PreprocessorBuilder
+from src.preprocess.core.base import BasePreprocessor
+from src.preprocess.core.preprocessor_builder import PreprocessorBuilder
 from src.recipes.base import Recipe
 
 

@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from src.data.dataset import Dataset
-from src.preprocess.base import ComposablePreprocessor
+from src.preprocess.core.base import ComposablePreprocessor
 
 
 def _build_interval_indices(
