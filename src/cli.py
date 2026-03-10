@@ -84,12 +84,13 @@ def run_cv(args: argparse.Namespace) -> int:
     """CV パイプラインを実行する。"""
     train_dataset = Dataset.from_csv(args.train_path)
     state = TrainState(dataset=train_dataset)
+    run_name = args.run_name if args.run_name is not None else args.recipe_name
     pipeline = build_cv_pipeline(
         recipe_builder=RecipeBuilder(),
         model_builder=ModelBuilder(),
         preprocessor_builder=PreprocessorBuilder(),
         recipe_name=args.recipe_name,
-        run_name=args.run_name,
+        run_name=run_name,
         experiment_name=args.experiment_name,
         verbose=args.verbose,
     )
