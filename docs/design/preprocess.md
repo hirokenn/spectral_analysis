@@ -7,7 +7,7 @@
 
 ## インターフェース
 
-前処理は `src/preprocess/base.py` の `BasePreprocessor` に従います。
+前処理は `src/preprocess/core/base.py` の `BasePreprocessor` に従います。
 
 ```python
 @runtime_checkable
@@ -24,8 +24,8 @@ class BasePreprocessor(Protocol):
 `PreprocessingPipeline` は複数前処理を順番に適用するクラスです。
 
 ```python
-from src.preprocess.identity import IdentityPreprocessor
-from src.preprocess.pipeline import PreprocessingPipeline
+from src.preprocess.transforms.identity import IdentityPreprocessor
+from src.preprocess.core.pipeline import PreprocessingPipeline
 
 pipeline = PreprocessingPipeline() >> IdentityPreprocessor()
 ```
@@ -50,7 +50,7 @@ pipeline = (
 recipe や pipeline の枠組みを保ったまま、前処理未適用の条件を表現するために使います。
 
 ```python
-from src.preprocess.identity import IdentityPreprocessor
+from src.preprocess.transforms.identity import IdentityPreprocessor
 
 preprocessor = IdentityPreprocessor()
 ```

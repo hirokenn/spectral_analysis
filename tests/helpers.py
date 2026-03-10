@@ -8,7 +8,7 @@ import numpy as np
 from src.data.dataset import Dataset
 from src.model.base_model import ModelType
 from src.model.model_builder import ModelBuilder
-from src.preprocess.preprocessor_builder import PreprocessorBuilder
+from src.preprocess.core.preprocessor_builder import PreprocessorBuilder
 from src.recipes.base import Recipe
 from src.recipes.builder import RecipeBuilder
 

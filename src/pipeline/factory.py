@@ -10,7 +10,7 @@ from src.pipeline.steps.model_steps import (
     TrainFull,
 )
 from src.pipeline.steps.run_step import MlflowEndRun, MlflowStartRun
-from src.preprocess.preprocessor_builder import PreprocessorBuilder
+from src.preprocess.core.preprocessor_builder import PreprocessorBuilder
 from src.recipes.builder import RecipeBuilder
 
 

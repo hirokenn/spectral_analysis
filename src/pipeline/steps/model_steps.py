@@ -13,7 +13,7 @@ from src.model.trainers.cv_trainer import CVTrainer
 from src.model.trainers.full_trainer import FullTrainer
 from src.pipeline.pipeline import BaseStep
 from src.pipeline.state import PredictState, StateLike, TrainState
-from src.preprocess.preprocessor_builder import PreprocessorBuilder
+from src.preprocess.core.preprocessor_builder import PreprocessorBuilder
 from src.recipes.builder import RecipeBuilder
 
 

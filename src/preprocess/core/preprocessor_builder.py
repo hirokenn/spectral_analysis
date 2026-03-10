@@ -5,19 +5,21 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
-from src.preprocess.dwt_features import DWTFeatureExtractor
-from src.preprocess.base import BasePreprocessor
-from src.preprocess.feature_union import FeatureUnion
-from src.preprocess.group_sequence_features import GroupSequenceFeatureExtractor
-from src.preprocess.identity import IdentityPreprocessor
-from src.preprocess.interval_features import (
+from src.preprocess.core.base import BasePreprocessor
+from src.preprocess.core.feature_union import FeatureUnion
+from src.preprocess.core.pipeline import PreprocessingPipeline
+from src.preprocess.features.dwt_features import DWTFeatureExtractor
+from src.preprocess.features.group_sequence_features import (
+    GroupSequenceFeatureExtractor,
+)
+from src.preprocess.features.interval_features import (
     IntervalMeanFeatureExtractor,
     IntervalSlopeFeatureExtractor,
 )
-from src.preprocess.pipeline import PreprocessingPipeline
-from src.preprocess.savgol import SavitzkyGolayPreprocessor
-from src.preprocess.snv import SNVPreprocessor
-from src.preprocess.water_band_summary import WaterBandSummaryFeatureExtractor
+from src.preprocess.features.water_band_summary import WaterBandSummaryFeatureExtractor
+from src.preprocess.transforms.identity import IdentityPreprocessor
+from src.preprocess.transforms.savgol import SavitzkyGolayPreprocessor
+from src.preprocess.transforms.snv import SNVPreprocessor
 
 
 class BuildType(StrEnum):

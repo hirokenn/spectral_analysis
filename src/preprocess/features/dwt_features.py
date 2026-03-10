@@ -6,7 +6,7 @@ import numpy as np
 import pywt  # type: ignore[import-untyped]
 
 from src.data.dataset import Dataset
-from src.preprocess.base import ComposablePreprocessor
+from src.preprocess.core.base import ComposablePreprocessor
 
 
 @dataclass
