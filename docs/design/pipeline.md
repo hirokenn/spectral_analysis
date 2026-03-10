@@ -42,8 +42,6 @@ state = TrainState()
 result = pipeline.run(state)
 ```
 
-`Pipeline([...])` でも作れますが、このプロジェクトでは可読性のため `>>` を基本とします。
-
 ## このプロジェクトの主要パイプライン
 
 ### CV パイプライン
@@ -54,12 +52,14 @@ CV 用パイプラインは `src.pipeline.factory.build_cv_pipeline()` で構築
 from src.model.model_builder import ModelBuilder
 from src.pipeline import build_cv_pipeline
 from src.pipeline.state import TrainState
+from src.preprocess.core.preprocessor_builder import PreprocessorBuilder
 from src.recipes.builder import RecipeBuilder
 
 pipeline = build_cv_pipeline(
     recipe_builder=RecipeBuilder(),
     model_builder=ModelBuilder(),
-    recipe_name="base_pls",
+    preprocessor_builder=PreprocessorBuilder(),
+    recipe_name="snv_lgbm",
 )
 
 state = TrainState(dataset=train_ds)
@@ -74,12 +74,13 @@ result = pipeline.run(state)
 - `PlotOOF` (`plot_oof=True` のとき)
 - `MlflowEndRun`
 
-このパイプラインは以下を行います。
+`TrainCV` の内部では次を行います。
 
-- recipe に従って各 fold で前処理とモデルを再構築
-- OOF 予測を作成
-- RMSE を `state.metrics` に保存
-- 相関プロットや残差ヒストグラムを MLflow に HTML 保存
+- `RecipeBuilder` で recipe を取得
+- `PreprocessorBuilder` で前処理を構築
+- `ModelBuilder` でモデルを構築
+- `GroupCV` で fold を回して OOF を作成
+- OOF 作成後、同じ recipe で全件再学習して `state.model` に保持
 
 ### 提出用パイプライン
 
@@ -89,12 +90,14 @@ result = pipeline.run(state)
 from src.model.model_builder import ModelBuilder
 from src.pipeline import build_submission_pipeline
 from src.pipeline.state import TrainState
+from src.preprocess.core.preprocessor_builder import PreprocessorBuilder
 from src.recipes.builder import RecipeBuilder
 
 pipeline = build_submission_pipeline(
     recipe_builder=RecipeBuilder(),
     model_builder=ModelBuilder(),
-    recipe_name="base_pls",
+    preprocessor_builder=PreprocessorBuilder(),
+    recipe_name="snv_lgbm",
 )
 
 state = TrainState(train_dataset=train_ds, test_dataset=test_ds)
@@ -104,36 +107,27 @@ pred = result.test_predictions
 
 実行される Step は次の通りです。
 
+- `MlflowStartRun`
 - `TrainFull`
 - `PredictTest`
+- `MlflowEndRun`
 
-このパイプラインは以下を行います。
+## 現在の実装上の注意
 
-- 全学習データで前処理器とモデルを学習
-- 学習済み前処理器を test データへ適用
-- `state.test_predictions` に予測値を保存
+- `GroupCV` は既定で `n_splits=10`, `test_size=0.3` です。
+- `GroupCV` は `tqdm` による進捗表示を持ちます。
+- `build_cv_pipeline()` は既定で `PlotOOF()` を含むため、Plotly HTML の artifact も作成します。
+- `Pipeline.verbose=True` のとき、各 Step の実行時間とログが標準出力に表示されます。
 
-## 実行ログ
-
-`Pipeline.verbose` が `True` の場合、各 Step の実行時間とログが出力されます。
-
-```python
-pipeline = build_cv_pipeline(
-    recipe_builder=RecipeBuilder(),
-    model_builder=ModelBuilder(),
-    recipe_name="base_pls",
-    verbose=True,
-)
-```
-
-出力例:
+## 実行ログの例
 
 ```text
 パイプラインを実行中...
 --------------------------------------------------------------------------------
-[1] MlflowStartRun: 0.010s - run_id=...
-[2] TrainCV: 0.254s - recipe=base_pls, splits=20, covered=1322/1322
-[3] EvaluateOOF: 0.002s - overall_rmse=..., group_rmse_mean=...
+[1] MlflowStartRun: 0.579s - run_id=...
+GroupCV: 100%|██████████| 10/10 [00:26<00:00,  2.66s/split]
+[2] TrainCV: 26.801s - recipe=snv_lgbm, splits=10, covered=1322/1322
+[3] EvaluateOOF: 0.003s - overall_rmse=..., group_rmse_mean=...
 --------------------------------------------------------------------------------
-総実行時間: 0.310s
+総実行時間: ...
 ```
