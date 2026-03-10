@@ -1,49 +1,10 @@
 {
-    "identity": {
-        "build_type": "identity",
-        "params": {}
-    },
-    "snv": {
-        "build_type": "snv",
-        "params": {}
-    },
-    "savgol_smoothing": {
-        "build_type": "savgol",
-        "params": {
-            "window_length": 11,
-            "polyorder": 3,
-            "mode": "interp"
-        }
-    },
-    "interval_mean_100": {
-        "build_type": "interval_mean",
+    "_shared_interval_100": {
         "params": {
             "interval_size": 100
         }
     },
-    "interval_slope_100": {
-        "build_type": "interval_slope",
-        "params": {
-            "interval_size": 100
-        }
-    },
-    "dwt_db4_level3": {
-        "build_type": "dwt",
-        "params": {
-            "wavelet": "db4",
-            "level": 3,
-            "mode": "symmetric",
-            "include_approximation": true,
-            "include_details": true,
-            "summary_stats": [
-                "mean",
-                "std",
-                "energy"
-            ]
-        }
-    },
-    "water_band_summary_default": {
-        "build_type": "water_band_summary",
+    "_shared_water_band_summary_default": {
         "params": {
             "bands": [
                 {
@@ -65,6 +26,49 @@
                 "area"
             ]
         }
+    },
+    "identity": {
+        "build_type": "identity",
+        "params": {}
+    },
+    "snv": {
+        "build_type": "snv",
+        "params": {}
+    },
+    "savgol_smoothing": {
+        "build_type": "savgol",
+        "params": {
+            "window_length": 11,
+            "polyorder": 3,
+            "mode": "interp"
+        }
+    },
+    "interval_mean_100": {
+        "extends": "_shared_interval_100",
+        "build_type": "interval_mean"
+    },
+    "interval_slope_100": {
+        "extends": "_shared_interval_100",
+        "build_type": "interval_slope"
+    },
+    "dwt_db4_level3": {
+        "build_type": "dwt",
+        "params": {
+            "wavelet": "db4",
+            "level": 3,
+            "mode": "symmetric",
+            "include_approximation": true,
+            "include_details": true,
+            "summary_stats": [
+                "mean",
+                "std",
+                "energy"
+            ]
+        }
+    },
+    "water_band_summary_default": {
+        "extends": "_shared_water_band_summary_default",
+        "build_type": "water_band_summary"
     },
     "group_sequence_features_default": {
         "build_type": "group_sequence",

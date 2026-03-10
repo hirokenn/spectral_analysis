@@ -39,3 +39,13 @@ def test_recipe_builder_contains_snv_lgbm_log1p_in_default_recipes() -> None:
     assert recipe.preprocessor_name == "snv_lgbm_pipeline"
     assert recipe.model_name == "snv_lgbm"
     assert recipe.target_transform_name == "log1p"
+
+
+def test_recipe_builder_contains_residual_recipe_in_default_recipes() -> None:
+    """デフォルトレシピに複合モデル用レシピが含まれていることを確認する。"""
+    recipe = RecipeBuilder().build("base_pls_snv_lgbm_residual")
+
+    assert recipe.name == "base_pls_snv_lgbm_residual"
+    assert recipe.preprocessor_name == "base_identity_pipeline"
+    assert recipe.model_name == "base_pls_snv_lgbm_residual"
+    assert recipe.target_transform_name == "identity"

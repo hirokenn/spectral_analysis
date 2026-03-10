@@ -142,16 +142,43 @@ class PreprocessorBuilder:
 
     def _get_preprocessor_config(self, preprocessor_name: str) -> dict[str, Any]:
         """前処理名に対応する設定を取り出して検証する。"""
+        resolved = self._resolve_preprocessor_config(preprocessor_name, ancestors=())
+        if "build_type" not in resolved:
+            raise ValueError(f"'build_type' が未指定です: {preprocessor_name}")
+        return resolved
+
+    def _resolve_preprocessor_config(
+        self,
+        preprocessor_name: str,
+        *,
+        ancestors: tuple[str, ...],
+    ) -> dict[str, Any]:
+        """継承を解決した前処理設定を返す。"""
+        if preprocessor_name in ancestors:
+            cycle = " -> ".join([*ancestors, preprocessor_name])
+            raise ValueError(f"前処理設定の継承が循環参照しています: {cycle}")
         if preprocessor_name not in self.config:
             raise ValueError(f"前処理定義が見つかりません: {preprocessor_name}")
 
         preprocessor_config = self.config[preprocessor_name]
         if not isinstance(preprocessor_config, dict):
             raise ValueError(f"前処理定義が不正です: {preprocessor_name}")
-        if "build_type" not in preprocessor_config:
-            raise ValueError(f"'build_type' が未指定です: {preprocessor_name}")
-
-        return preprocessor_config
+        parent_name = preprocessor_config.get("extends")
+        if parent_name is None:
+            resolved = dict(preprocessor_config)
+        else:
+            if not isinstance(parent_name, str) or not parent_name:
+                raise ValueError(
+                    f"'extends' は空でない文字列で指定してください: {preprocessor_name}"
+                )
+            parent_config = self._resolve_preprocessor_config(
+                parent_name,
+                ancestors=(*ancestors, preprocessor_name),
+            )
+            resolved = self._merge_preprocessor_config(
+                parent_config, preprocessor_config
+            )
+        return resolved
 
     def _get_reference_names(
         self,
@@ -166,3 +193,20 @@ class PreprocessorBuilder:
         if not all(isinstance(name, str) for name in names):
             raise ValueError(f"'{key}' の要素は文字列である必要があります")
         return names
+
+    @staticmethod
+    def _merge_preprocessor_config(
+        parent_config: dict[str, Any],
+        child_config: dict[str, Any],
+    ) -> dict[str, Any]:
+        """親子の前処理設定をマージする。"""
+        merged = dict(parent_config)
+        child_without_extends = {
+            key: value for key, value in child_config.items() if key != "extends"
+        }
+        parent_params = parent_config.get("params")
+        child_params = child_without_extends.get("params")
+        if isinstance(parent_params, dict) and isinstance(child_params, dict):
+            child_without_extends["params"] = {**parent_params, **child_params}
+        merged.update(child_without_extends)
+        return merged

@@ -113,3 +113,20 @@ def test_build_returns_extended_preprocessors_from_config() -> None:
     assert isinstance(builder.build("interval_slope"), IntervalSlopeFeatureExtractor)
     assert isinstance(builder.build("dwt"), DWTFeatureExtractor)
     assert isinstance(builder.build("water"), WaterBandSummaryFeatureExtractor)
+
+
+def test_build_resolves_extends_and_merges_preprocessor_params() -> None:
+    builder = PreprocessorBuilder(
+        config={
+            "_shared_interval": {"params": {"interval_size": 4}},
+            "interval_mean": {
+                "extends": "_shared_interval",
+                "build_type": "interval_mean",
+            },
+        }
+    )
+
+    preprocessor = builder.build("interval_mean")
+
+    assert isinstance(preprocessor, IntervalMeanFeatureExtractor)
+    assert preprocessor.interval_size == 4
