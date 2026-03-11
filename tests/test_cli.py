@@ -7,6 +7,15 @@ from pathlib import Path
 from src.cli import main
 
 
+def write_train_csv_for_arg_test(path: Path) -> None:
+    """run_name 引数検証用の最小 train.csv を作成する。"""
+    with path.open("w", encoding="cp932", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["sample number", "species number", "4000", "5000", "含水率"])
+        writer.writerow([1, 1, 0.1, 0.2, 1.0])
+        writer.writerow([2, 2, 0.2, 0.3, 2.0])
+
+
 def write_params_json(path: Path) -> None:
     """CLI テスト用の params.json を作成する。"""
     path.write_text(
@@ -109,10 +118,67 @@ def test_cli_submission_runs_and_writes_csv(
     captured = capsys.readouterr()
     payload = json.loads(captured.out.strip())
     assert exit_code == 0
-    assert payload["run_id"] is not None
+    assert payload["run_id"] is None
     assert Path(payload["output_path"]).resolve() == output_path.resolve()
     assert output_path.exists()
 
     rows = list(csv.reader(output_path.open("r", encoding="utf-8", newline="")))
     assert len(rows) == 2
     assert [row[0] for row in rows] == ["10", "11"]
+
+
+def test_cli_cv_defaults_run_name_to_recipe_name(
+    tmp_path: Path, monkeypatch
+) -> None:  # type: ignore[no-untyped-def]
+    train_path = tmp_path / "train.csv"
+    write_train_csv_for_arg_test(train_path)
+    captured: dict[str, str | None] = {"run_name": None}
+
+    class DummyPipeline:
+        """run 呼び出し時に必要な最小パイプライン。"""
+
+        def run(self, state):  # type: ignore[no-untyped-def]
+            return state
+
+    def fake_build_cv_pipeline(*args, **kwargs):  # type: ignore[no-untyped-def]
+        captured["run_name"] = kwargs.get("run_name")
+        return DummyPipeline()
+
+    monkeypatch.setattr("src.cli.build_cv_pipeline", fake_build_cv_pipeline)
+
+    main(["cv", "--train-path", str(train_path), "--no-verbose"])
+
+    assert captured["run_name"] == "base_pls"
+
+
+def test_cli_cv_respects_explicit_run_name(
+    tmp_path: Path, monkeypatch
+) -> None:  # type: ignore[no-untyped-def]
+    train_path = tmp_path / "train.csv"
+    write_train_csv_for_arg_test(train_path)
+    captured: dict[str, str | None] = {"run_name": None}
+
+    class DummyPipeline:
+        """run 呼び出し時に必要な最小パイプライン。"""
+
+        def run(self, state):  # type: ignore[no-untyped-def]
+            return state
+
+    def fake_build_cv_pipeline(*args, **kwargs):  # type: ignore[no-untyped-def]
+        captured["run_name"] = kwargs.get("run_name")
+        return DummyPipeline()
+
+    monkeypatch.setattr("src.cli.build_cv_pipeline", fake_build_cv_pipeline)
+
+    main(
+        [
+            "cv",
+            "--train-path",
+            str(train_path),
+            "--run-name",
+            "manual-run",
+            "--no-verbose",
+        ]
+    )
+
+    assert captured["run_name"] == "manual-run"

@@ -11,6 +11,7 @@ from src.preprocess.features.interval_features import (
     IntervalMeanFeatureExtractor,
     IntervalSlopeFeatureExtractor,
 )
+from src.preprocess.features.pls_oof_feature import PLSOOFFeatureExtractor
 from src.preprocess.features.water_band_summary import WaterBandSummaryFeatureExtractor
 from src.preprocess.transforms.savgol import SavitzkyGolayPreprocessor
 from src.preprocess.transforms.snv import SNVPreprocessor
@@ -159,3 +160,51 @@ def test_group_sequence_feature_extractor_returns_expected_features() -> None:
     assert np.allclose(transformed.X[0, :5], [1.0, 0.0, 0.0, 0.0, 0.0])
     assert np.allclose(transformed.X[1, :5], [2.0, 0.5, 3.0, 1.0, 4.0 / 3.0])
     assert np.allclose(transformed.X[3, :5], [3.0, 1.0, 2.0, 2.0, 4.0 / 3.0])
+
+
+def test_pls_oof_feature_extractor_returns_oof_for_train_and_full_for_transform(
+    monkeypatch,
+) -> None:  # type: ignore[no-untyped-def]
+    class FakePLSRegressor:
+        def __init__(self, **params):  # type: ignore[no-untyped-def]
+            self.params = params
+            self.mean_ = 0.0
+
+        def fit(self, ds: Dataset) -> None:
+            assert ds.y is not None
+            self.mean_ = float(np.mean(ds.y))
+
+        def predict(self, ds: Dataset) -> np.ndarray:
+            return np.full(ds.X.shape[0], self.mean_, dtype=np.float32)
+
+    monkeypatch.setattr(
+        "src.preprocess.features.pls_oof_feature.PLSRegressor",
+        FakePLSRegressor,
+    )
+
+    train_ds = make_dataset(
+        X=np.array([[1.0], [2.0], [3.0], [4.0]], dtype=np.float32),
+        y=np.array([1.0, 2.0, 10.0, 20.0], dtype=np.float32),
+        sample_id=np.array([1, 2, 3, 4], dtype=np.int64),
+        groups=np.array([1, 1, 2, 2], dtype=np.int64),
+    )
+    test_ds = make_dataset(
+        X=np.array([[5.0], [6.0]], dtype=np.float32),
+        y=None,
+        sample_id=np.array([10, 11], dtype=np.int64),
+        groups=np.array([3, 3], dtype=np.int64),
+    )
+    extractor = PLSOOFFeatureExtractor()
+
+    transformed_train = extractor.fit_transform(train_ds)
+    transformed_test = extractor.transform(test_ds)
+
+    np.testing.assert_allclose(
+        transformed_train.X.ravel(),
+        np.array([15.0, 15.0, 1.5, 1.5], dtype=np.float32),
+    )
+    np.testing.assert_allclose(
+        transformed_test.X.ravel(),
+        np.array([8.25, 8.25], dtype=np.float32),
+    )
+    assert list(transformed_train.feature_names) == ["raw_pls_oof_pred"]

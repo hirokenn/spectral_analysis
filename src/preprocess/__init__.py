@@ -12,6 +12,7 @@ from src.preprocess.features.interval_features import (
     IntervalMeanFeatureExtractor,
     IntervalSlopeFeatureExtractor,
 )
+from src.preprocess.features.pls_oof_feature import PLSOOFFeatureExtractor
 from src.preprocess.features.water_band_summary import WaterBandSummaryFeatureExtractor
 from src.preprocess.transforms.identity import IdentityPreprocessor
 from src.preprocess.transforms.savgol import SavitzkyGolayPreprocessor
@@ -25,6 +26,7 @@ __all__ = [
     "IdentityPreprocessor",
     "IntervalMeanFeatureExtractor",
     "IntervalSlopeFeatureExtractor",
+    "PLSOOFFeatureExtractor",
     "PreprocessingPipeline",
     "PreprocessorBuilder",
     "SavitzkyGolayPreprocessor",

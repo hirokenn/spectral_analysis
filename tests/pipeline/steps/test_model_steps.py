@@ -50,6 +50,28 @@ def test_train_cv_updates_oof_predictions() -> None:
     np.testing.assert_allclose(updated.oof_predictions, expected)
 
 
+def test_train_cv_uses_loso_by_default() -> None:
+    ds = make_dataset(
+        X=np.array([[0.0], [1.0], [2.0], [3.0]]),
+        y=np.array([1.0, 2.0, 3.0, 4.0]),
+        groups=np.array([1, 1, 2, 2]),
+        sample_id=np.array([10, 11, 12, 13]),
+    )
+    state = TrainState(dataset=ds)
+    step = TrainCV(
+        recipe_builder=make_recipe_builder(),
+        model_builder=DummyModelBuilder(),
+        preprocessor_builder=DummyPreprocessorBuilder(),
+        recipe_name="dummy_recipe",
+    )
+
+    updated = step.execute(state)
+
+    assert updated.oof_predictions is not None
+    expected = np.array([3.5, 3.5, 1.5, 1.5], dtype=np.float32)
+    np.testing.assert_allclose(updated.oof_predictions, expected)
+
+
 def test_train_cv_averages_when_sample_appears_multiple_times() -> None:
     ds = make_dataset(
         X=np.array([[0.0], [1.0], [2.0]]),
@@ -128,6 +150,39 @@ def test_predict_test_updates_predictions() -> None:
     np.testing.assert_allclose(
         predicted.test_predictions,
         np.array([2.0, 2.0], dtype=np.float32),
+    )
+
+
+def test_predict_test_inverts_log1p_transformed_predictions() -> None:
+    train_ds = make_dataset(
+        X=np.array([[0.0], [1.0], [2.0]]),
+        y=np.array([1.0, 2.0, 3.0]),
+        groups=np.array([1, 1, 2]),
+        sample_id=np.array([1, 2, 3]),
+    )
+    test_ds = make_dataset(
+        X=np.array([[10.0], [11.0]]),
+        y=None,
+        groups=np.array([3, 3]),
+        sample_id=np.array([100, 101]),
+    )
+    state = TrainState(train_dataset=train_ds, test_dataset=test_ds)
+    train_step = TrainFull(
+        recipe_builder=make_recipe_builder(target_transform_name="log1p"),
+        model_builder=DummyModelBuilder(),
+        preprocessor_builder=DummyPreprocessorBuilder(),
+        recipe_name="dummy_recipe",
+    )
+    predict_step = PredictTest()
+
+    trained = train_step.execute(state)
+    predicted = predict_step.execute(trained)
+
+    assert predicted.test_predictions is not None
+    expected = np.expm1(np.mean(np.log1p(np.array([1.0, 2.0, 3.0], dtype=np.float32))))
+    np.testing.assert_allclose(
+        predicted.test_predictions,
+        np.array([expected, expected], dtype=np.float32),
     )
 
 

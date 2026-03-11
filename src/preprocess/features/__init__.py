@@ -8,6 +8,7 @@ from src.preprocess.features.interval_features import (
     IntervalMeanFeatureExtractor,
     IntervalSlopeFeatureExtractor,
 )
+from src.preprocess.features.pls_oof_feature import PLSOOFFeatureExtractor
 from src.preprocess.features.water_band_summary import WaterBandSummaryFeatureExtractor
 
 __all__ = [
@@ -15,5 +16,6 @@ __all__ = [
     "GroupSequenceFeatureExtractor",
     "IntervalMeanFeatureExtractor",
     "IntervalSlopeFeatureExtractor",
+    "PLSOOFFeatureExtractor",
     "WaterBandSummaryFeatureExtractor",
 ]

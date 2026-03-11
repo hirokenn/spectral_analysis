@@ -11,8 +11,8 @@ from src.model.model_builder import ModelBuilder
 from src.pipeline import build_cv_pipeline, build_submission_pipeline
 from src.pipeline.state import TrainState
 from src.preprocess.core.preprocessor_builder import PreprocessorBuilder
-from src.recipes.default_recipes import RECIPES
 from src.recipes.builder import RecipeBuilder
+from src.recipes.recipes import RECIPES
 
 DEFAULT_TRAIN_PATH = "data/train.csv"
 DEFAULT_TEST_PATH = "data/test.csv"
@@ -84,12 +84,13 @@ def run_cv(args: argparse.Namespace) -> int:
     """CV パイプラインを実行する。"""
     train_dataset = Dataset.from_csv(args.train_path)
     state = TrainState(dataset=train_dataset)
+    run_name = args.run_name if args.run_name is not None else args.recipe_name
     pipeline = build_cv_pipeline(
         recipe_builder=RecipeBuilder(),
         model_builder=ModelBuilder(),
         preprocessor_builder=PreprocessorBuilder(),
         recipe_name=args.recipe_name,
-        run_name=args.run_name,
+        run_name=run_name,
         experiment_name=args.experiment_name,
         verbose=args.verbose,
     )

@@ -5,6 +5,8 @@ import pytest
 from src.model.model_builder import ModelBuilder
 from src.model.regressors.lightgbm import LightGBMRegressor
 from src.model.regressors.pls import PLSRegressor
+from src.model.regressors.residual_ensemble import ResidualEnsembleRegressor
+from tests.helpers import DummyPreprocessorBuilder
 
 
 def test_build_returns_pls_with_params_from_config() -> None:
@@ -64,3 +66,53 @@ def test_build_returns_lightgbm_with_params_from_config() -> None:
     assert isinstance(model, LightGBMRegressor)
     assert model.params["n_estimators"] == 10
     assert model.params["learning_rate"] == 0.1
+
+
+def test_build_returns_residual_ensemble_with_separate_preprocessors() -> None:
+    builder = ModelBuilder(
+        config={
+            "base_model": {
+                "build_type": "pls",
+                "params": {"n_components": 2, "scale": False},
+            },
+            "residual_model": {
+                "build_type": "lightgbm",
+                "params": {"n_estimators": 10, "learning_rate": 0.1},
+            },
+            "composite_model": {
+                "build_type": "residual_ensemble",
+                "base_model_name": "base_model",
+                "base_preprocessor_name": "identity_pipeline",
+                "residual_model_name": "residual_model",
+                "residual_preprocessor_name": "identity_pipeline",
+            },
+        },
+        preprocessor_builder=DummyPreprocessorBuilder(),
+    )
+
+    model = builder.build("composite_model")
+
+    assert isinstance(model, ResidualEnsembleRegressor)
+    assert isinstance(model.base_model, PLSRegressor)
+    assert isinstance(model.residual_model, LightGBMRegressor)
+
+
+def test_build_resolves_extends_and_merges_params() -> None:
+    builder = ModelBuilder(
+        config={
+            "_shared_pls": {
+                "build_type": "pls",
+                "params": {"n_components": 8, "scale": True},
+            },
+            "custom_pls": {
+                "extends": "_shared_pls",
+                "params": {"n_components": 3},
+            },
+        }
+    )
+
+    model = builder.build("custom_pls")
+
+    assert isinstance(model, PLSRegressor)
+    assert model.params["n_components"] == 3
+    assert model.params["scale"] is True

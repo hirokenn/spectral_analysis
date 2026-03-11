@@ -180,6 +180,7 @@ class MyPreprocessor:
 実装時によく参照する主な設定名は次の通りです。
 
 - `base_identity_pipeline`
+- `snv_pls_pipeline`
 - `snv_lgbm_pipeline`
 - `snv_lgbm_snv_branch`
 - `snv_lgbm_spectral_union`

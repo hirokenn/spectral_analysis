@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Mapping
 
 from src.recipes.base import Recipe
-from src.recipes.default_recipes import RECIPES
+from src.recipes.recipes import RECIPES
 
 
 @dataclass
