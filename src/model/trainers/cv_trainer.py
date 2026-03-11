@@ -7,6 +7,7 @@ import numpy as np
 
 from src.data.dataset import Dataset
 from src.model.model_builder import ModelBuilder
+from src.model.target_transform import build_target_transformer
 from src.preprocess.core.preprocessor_builder import PreprocessorBuilder
 from src.recipes.base import Recipe
 
@@ -48,12 +49,23 @@ class CVTrainer:
                 self.recipe.preprocessor_name
             )
             model = self.model_builder.build(self.recipe.model_name)
+            if train_ds.y is None:
+                raise ValueError("CV の train fold には y が必要です")
 
             processed_train_ds = preprocessor.fit_transform(train_ds)
             processed_valid_ds = preprocessor.transform(valid_ds)
+            target_transformer = build_target_transformer(
+                self.recipe.target_transform_name
+            )
+            target_transformer.fit(train_ds.y)
+            transformed_train_ds = processed_train_ds.with_target(
+                target_transformer.transform(train_ds.y)
+            )
 
-            model.fit(processed_train_ds)
-            pred = model.predict(processed_valid_ds)
+            model.fit(transformed_train_ds)
+            pred = target_transformer.inverse_transform(
+                model.predict(processed_valid_ds)
+            )
             if pred.shape[0] != valid_ds.X.shape[0]:
                 raise ValueError("予測件数と validation サンプル数が一致しません")
 

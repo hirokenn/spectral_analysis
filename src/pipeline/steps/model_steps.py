@@ -5,7 +5,7 @@ from typing import Any, Iterable, cast
 import mlflow  # type: ignore[import-untyped]
 
 from src.data.dataset import Dataset
-from src.data.group_cv import GroupCV
+from src.data.group_cv import LOSOCV
 from src.model.eval import OOFEvaluator
 from src.model.model_builder import ModelBuilder
 from src.model.plot import OOFPlotter
@@ -54,7 +54,7 @@ class TrainCV(BaseStep):
         recipe = self.recipe_builder.build(self.recipe_name)
         cv = cast(
             Iterable[tuple[Dataset, Dataset]],
-            kwargs.get("cv", GroupCV(dataset=dataset)),
+            kwargs.get("cv", LOSOCV(dataset=dataset)),
         )
         trainer = CVTrainer(
             cv=cv,
@@ -65,12 +65,15 @@ class TrainCV(BaseStep):
         result = trainer.run(dataset=dataset)
         train_state.oof_predictions = result.oof_predictions
         train_state.recipe_name = recipe.name
-        preprocessor = self.preprocessor_builder.build(recipe.preprocessor_name)
-        model = self.model_builder.build(recipe.model_name)
-        processed_dataset = preprocessor.fit_transform(dataset)
-        model.fit(processed_dataset)
-        train_state.model = model
-        train_state.model_type = model.model_type
+        full_result = FullTrainer(
+            recipe=recipe,
+            model_builder=self.model_builder,
+            preprocessor_builder=self.preprocessor_builder,
+        ).run(dataset)
+        train_state.preprocessor = full_result.preprocessor
+        train_state.model = full_result.model
+        train_state.model_type = full_result.model.model_type
+        train_state.target_transformer = full_result.target_transformer
         self.log_out = (
             f"recipe={recipe.name}, "
             f"splits={result.n_splits}, "
@@ -115,6 +118,7 @@ class TrainFull(BaseStep):
         train_state.preprocessor = result.preprocessor
         train_state.model = result.model
         train_state.model_type = result.model.model_type
+        train_state.target_transformer = result.target_transformer
         self.log_out = f"recipe={recipe.name}"
         return train_state
 
@@ -134,7 +138,10 @@ class PredictTest(BaseStep):
         assert state.model is not None
 
         processed_dataset = state.preprocessor.transform(dataset)
-        state.test_predictions = state.model.predict(processed_dataset)
+        predictions = state.model.predict(processed_dataset)
+        if state.target_transformer is not None:
+            predictions = state.target_transformer.inverse_transform(predictions)
+        state.test_predictions = predictions
         self.log_out = f"n_predictions={state.test_predictions.shape[0]}"
         return state
 

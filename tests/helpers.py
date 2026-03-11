@@ -63,18 +63,25 @@ class DummyPreprocessorBuilder(PreprocessorBuilder):
         )
 
 
-def make_recipe(recipe_name: str = "dummy_recipe") -> Recipe:
+def make_recipe(
+    recipe_name: str = "dummy_recipe",
+    target_transform_name: str = "identity",
+) -> Recipe:
     """Identity 前処理を使うテスト用 recipe を返す。"""
     return Recipe(
         name=recipe_name,
         preprocessor_name="identity_pipeline",
         model_name="dummy_model",
+        target_transform_name=target_transform_name,
     )
 
 
-def make_recipe_builder(recipe_name: str = "dummy_recipe") -> RecipeBuilder:
+def make_recipe_builder(
+    recipe_name: str = "dummy_recipe",
+    target_transform_name: str = "identity",
+) -> RecipeBuilder:
     """テスト用 recipe builder を返す。"""
-    recipe = make_recipe(recipe_name)
+    recipe = make_recipe(recipe_name, target_transform_name=target_transform_name)
     return RecipeBuilder(recipes={recipe.name: recipe})
 
 

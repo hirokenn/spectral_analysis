@@ -13,6 +13,7 @@ from src.preprocess.features.interval_features import (
     IntervalMeanFeatureExtractor,
     IntervalSlopeFeatureExtractor,
 )
+from src.preprocess.features.pls_oof_feature import PLSOOFFeatureExtractor
 from src.preprocess.features.water_band_summary import WaterBandSummaryFeatureExtractor
 from src.preprocess.transforms.identity import IdentityPreprocessor
 from src.preprocess.transforms.savgol import SavitzkyGolayPreprocessor
@@ -103,6 +104,7 @@ def test_build_returns_extended_preprocessors_from_config() -> None:
                     "stats": ["mean"],
                 },
             },
+            "pls_oof": {"build_type": "pls_oof_feature", "params": {}},
         }
     )
 
@@ -113,3 +115,21 @@ def test_build_returns_extended_preprocessors_from_config() -> None:
     assert isinstance(builder.build("interval_slope"), IntervalSlopeFeatureExtractor)
     assert isinstance(builder.build("dwt"), DWTFeatureExtractor)
     assert isinstance(builder.build("water"), WaterBandSummaryFeatureExtractor)
+    assert isinstance(builder.build("pls_oof"), PLSOOFFeatureExtractor)
+
+
+def test_build_resolves_extends_and_merges_preprocessor_params() -> None:
+    builder = PreprocessorBuilder(
+        config={
+            "_shared_interval": {"params": {"interval_size": 4}},
+            "interval_mean": {
+                "extends": "_shared_interval",
+                "build_type": "interval_mean",
+            },
+        }
+    )
+
+    preprocessor = builder.build("interval_mean")
+
+    assert isinstance(preprocessor, IntervalMeanFeatureExtractor)
+    assert preprocessor.interval_size == 4

@@ -10,3 +10,4 @@ class Recipe:
     name: str
     preprocessor_name: str
     model_name: str
+    target_transform_name: str = "identity"
