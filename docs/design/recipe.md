@@ -33,7 +33,7 @@ class Recipe:
 
 ## 定義場所
 
-既定の recipe は `src/recipes/default_recipes.py` に定義します。
+既定の recipe は `src/recipes/recipes.py` に定義します。
 
 ```python
 from src.recipes.base import Recipe
@@ -72,17 +72,9 @@ CV 学習では `TrainCV` 内で recipe が使われます。
 
 1. `preprocess_params.json` に前処理名を定義する
 2. `params.json` にモデル名を定義する
-3. `RECIPES` に `Recipe(...)` を追加する
+3. `src/recipes/recipes.py` の `_build_default_recipes` 内でレシピを登録する
 
-例:
-
-```python
-RECIPES["my_pls"] = Recipe(
-    name="my_pls",
-    preprocessor_name="my_preprocessor_pipeline",
-    model_name="base_pls",
-)
-```
+詳細な手順は `docs/adding_features_preprocess_recipes.md` を参照してください。
 
 ## 現在の recipe
 

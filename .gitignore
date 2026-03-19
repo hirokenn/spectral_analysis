@@ -90,7 +90,7 @@ mlflow.db
 
 
 # Data
-data/
+./data/
 !data/.gitkeep
 
 # Environment variables

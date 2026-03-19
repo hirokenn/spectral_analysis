@@ -116,7 +116,7 @@ tests/
 
 - `base.py`
   - `Recipe`
-- `default_recipes.py`
+- `recipes.py`
   - 既定 recipe の定義
 - `builder.py`
   - recipe 名から recipe を取得
@@ -237,7 +237,7 @@ CLI
       -> model.eval
       -> model.plot
     -> recipes.builder
-      -> recipes.default_recipes
+      -> recipes.recipes
     -> preprocess.core.preprocessor_builder
       -> preprocess.transforms
       -> preprocess.features
@@ -270,7 +270,7 @@ CLI
 
 ### 新しい recipe を追加したい場合
 
-- `src/recipes/default_recipes.py` に recipe を追加
+- `src/recipes/recipes.py` に recipe を追加
 - `Recipe.preprocessor_name` が参照する前処理を `preprocess_params.json` に追加
 - `Recipe.model_name` が参照するモデルを `params.json` に追加
 
@@ -283,6 +283,7 @@ CLI
 
 詳細は以下を参照してください。
 
+- `docs/adding_features_preprocess_recipes.md` - 特徴量・前処理・レシピの追加手順
 - `docs/design/recipe.md`
 - `docs/design/preprocess.md`
 - `docs/design/pipeline.md`

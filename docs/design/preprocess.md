@@ -173,7 +173,9 @@ class MyPreprocessor:
 1. `src/preprocess/transforms/` または `src/preprocess/features/` にクラスを追加する
 2. `src/preprocess/core/preprocessor_builder.py` に `build_type` を追加する
 3. `preprocess_params.json` に設定ノードを追加する
-4. 必要なら `src/recipes/default_recipes.py` からその前処理名を参照する
+4. 必要なら `src/recipes/recipes.py` のレシピからその前処理名を参照する
+
+詳細な手順は `docs/adding_features_preprocess_recipes.md` を参照してください。
 
 ## 現在の主要前処理名
 
