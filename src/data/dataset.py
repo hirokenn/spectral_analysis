@@ -92,9 +92,12 @@ class Dataset:
             raise ValueError("スペクトル列名を波数に変換できません") from exc
 
         X = np.asarray(
-            [[float(row[col]) for col in feature_cols] for row in rows], dtype=np.float32
+            [[float(row[col]) for col in feature_cols] for row in rows],
+            dtype=np.float32,
         )
-        sample_id = np.asarray([int(row[sample_id_col]) for row in rows], dtype=np.int64)
+        sample_id = np.asarray(
+            [int(row[sample_id_col]) for row in rows], dtype=np.int64
+        )
         groups = np.asarray([int(row[group_col]) for row in rows], dtype=np.int64)
         y = (
             np.asarray([float(row[target_col]) for row in rows], dtype=np.float32)
@@ -150,7 +153,9 @@ class Dataset:
             y=(
                 None
                 if ref.y is None
-                else np.concatenate([ds.y for ds in datasets if ds.y is not None], axis=0)
+                else np.concatenate(
+                    [ds.y for ds in datasets if ds.y is not None], axis=0
+                )
             ),
             groups=(
                 None
@@ -178,20 +183,28 @@ class Dataset:
                 raise ValueError("sample_id が一致しません")
             if (ds.y is None) != (ref.y is None):
                 raise ValueError("y の有無が混在しています")
-            if ds.y is not None and ref.y is not None and not np.array_equal(ds.y, ref.y):
+            if (
+                ds.y is not None
+                and ref.y is not None
+                and not np.array_equal(ds.y, ref.y)
+            ):
                 raise ValueError("y が一致しません")
             if (ds.groups is None) != (ref.groups is None):
                 raise ValueError("groups の有無が混在しています")
-            if ds.groups is not None and ref.groups is not None and not np.array_equal(
-                ds.groups, ref.groups
+            if (
+                ds.groups is not None
+                and ref.groups is not None
+                and not np.array_equal(ds.groups, ref.groups)
             ):
                 raise ValueError("groups が一致しません")
 
         feature_names = np.concatenate(
             [
-                ds.feature_names
-                if ds.feature_names is not None
-                else cls._default_feature_names(ds.wavenumbers)
+                (
+                    ds.feature_names
+                    if ds.feature_names is not None
+                    else cls._default_feature_names(ds.wavenumbers)
+                )
                 for ds in datasets
             ],
             axis=0,
@@ -218,13 +231,17 @@ class Dataset:
         resolved_wavenumbers = (
             self.wavenumbers.copy()
             if wavenumbers is None and n_features == self.X.shape[1]
-            else np.full(n_features, np.nan, dtype=np.float32)
-            if wavenumbers is None
-            else np.asarray(wavenumbers, dtype=np.float32)
+            else (
+                np.full(n_features, np.nan, dtype=np.float32)
+                if wavenumbers is None
+                else np.asarray(wavenumbers, dtype=np.float32)
+            )
         )
         resolved_feature_names = (
             self.feature_names.copy()
-            if feature_names is None and n_features == self.X.shape[1] and self.feature_names is not None
+            if feature_names is None
+            and n_features == self.X.shape[1]
+            and self.feature_names is not None
             else feature_names
         )
         return Dataset(
@@ -251,9 +268,7 @@ class Dataset:
     def _default_feature_names(wavenumbers: np.ndarray) -> np.ndarray:
         """波数から既定の特徴量名を生成する。"""
         names = [
-            str(float(wavenumber))
-            if np.isfinite(wavenumber)
-            else f"feature_{index}"
+            str(float(wavenumber)) if np.isfinite(wavenumber) else f"feature_{index}"
             for index, wavenumber in enumerate(wavenumbers)
         ]
         return np.asarray(names, dtype=object)

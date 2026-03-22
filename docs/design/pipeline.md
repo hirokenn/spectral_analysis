@@ -79,7 +79,7 @@ result = pipeline.run(state)
 - `RecipeBuilder` で recipe を取得
 - `PreprocessorBuilder` で前処理を構築
 - `ModelBuilder` でモデルを構築
-- `LOSOCV` で fold を回して OOF を作成
+- `GroupCV`（Repeated Group CV）で fold を回して OOF を作成
 - OOF 作成後、同じ recipe で全件再学習して `state.model` に保持
 
 ### 提出用パイプライン
@@ -114,8 +114,8 @@ pred = result.test_predictions
 
 ## 現在の実装上の注意
 
-- `LOSOCV` は既定で各グループを 1 回ずつ validation に使います。
-- `LOSOCV` は `tqdm` による進捗表示を持ちます。
+- `GroupCV` は各 repeat で `n_splits=5`（ユニークグループ数が 5 未満のときはその数）に分割し、`n_repeats=3` 回繰り返します。
+- `GroupCV` は `tqdm` による進捗表示を持ちます。
 - `build_cv_pipeline()` は既定で `PlotOOF()` を含むため、Plotly HTML の artifact も作成します。
 - `Pipeline.verbose=True` のとき、各 Step の実行時間とログが標準出力に表示されます。
 
@@ -125,8 +125,9 @@ pred = result.test_predictions
 パイプラインを実行中...
 --------------------------------------------------------------------------------
 [1] MlflowStartRun: 0.579s - run_id=...
-LOSOCV: 100%|██████████| 19/19 [00:26<00:00,  1.40s/split]
-[2] TrainCV: 26.801s - recipe=snv_lgbm, splits=19, covered=1322/1322
+GroupCV (repeat 1/3): 100%|██████████| 5/5 [00:20<00:00,  4.00s/split]
+...
+[2] TrainCV: ... - recipe=snv_lgbm, splits=15, covered=1322/1322
 [3] EvaluateOOF: 0.003s - overall_rmse=..., group_rmse_mean=...
 --------------------------------------------------------------------------------
 総実行時間: ...

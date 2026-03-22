@@ -22,15 +22,15 @@ def test_group_cv_yields_train_test_pairs() -> None:
     ds = make_dataset()
     cv = GroupCV(
         dataset=ds,
-        n_splits=5,
-        test_size=0.25,
+        n_splits=4,
+        n_repeats=1,
         random_state=0,
         show_progress=False,
     )
 
     splits = list(cv)
 
-    assert len(splits) == 5
+    assert len(splits) == 4
     for train_ds, test_ds in splits:
         assert train_ds.groups is not None
         assert test_ds.groups is not None
@@ -44,14 +44,14 @@ def test_group_cv_is_reproducible_with_same_seed() -> None:
     cv1 = GroupCV(
         dataset=ds,
         n_splits=2,
-        test_size=0.5,
+        n_repeats=1,
         random_state=7,
         show_progress=False,
     )
     cv2 = GroupCV(
         dataset=ds,
         n_splits=2,
-        test_size=0.5,
+        n_repeats=1,
         random_state=7,
         show_progress=False,
     )
@@ -66,7 +66,7 @@ def test_group_cv_covers_all_groups_at_least_once() -> None:
     cv = GroupCV(
         dataset=ds,
         n_splits=2,
-        test_size=0.5,
+        n_repeats=1,
         random_state=7,
         show_progress=False,
     )
@@ -79,10 +79,26 @@ def test_group_cv_covers_all_groups_at_least_once() -> None:
     assert tested_groups == {1, 2, 3, 4}
 
 
-def test_group_cv_raises_when_splits_insufficient_for_full_coverage() -> None:
+def test_group_cv_raises_when_n_splits_too_small() -> None:
     ds = make_dataset()
-    with pytest.raises(ValueError, match="n_splits が不足"):
-        GroupCV(dataset=ds, n_splits=1, test_size=0.25, show_progress=False)
+    with pytest.raises(ValueError, match="n_splits は 2 以上"):
+        GroupCV(
+            dataset=ds,
+            n_splits=1,
+            n_repeats=1,
+            show_progress=False,
+        )
+
+
+def test_group_cv_raises_when_n_splits_exceeds_group_count() -> None:
+    ds = make_dataset()
+    with pytest.raises(ValueError, match="ユニークなグループ数以下"):
+        GroupCV(
+            dataset=ds,
+            n_splits=5,
+            n_repeats=1,
+            show_progress=False,
+        )
 
 
 def test_group_cv_raises_when_groups_missing() -> None:
@@ -91,6 +107,36 @@ def test_group_cv_raises_when_groups_missing() -> None:
 
     with pytest.raises(ValueError, match="groups"):
         GroupCV(dataset=ds)
+
+
+def test_group_cv_repeated_yields_n_repeats_times_splits() -> None:
+    """各 repeat で n_splits 回、合計 n_repeats * n_splits 回になる。"""
+    ds = make_dataset()
+    cv = GroupCV(
+        dataset=ds,
+        n_splits=4,
+        n_repeats=3,
+        random_state=42,
+        show_progress=False,
+    )
+
+    splits = list(cv)
+
+    assert len(splits) == 4 * 3
+    for train_ds, test_ds in splits:
+        assert set(train_ds.sample_id).isdisjoint(set(test_ds.sample_id))
+        assert set(train_ds.sample_id) | set(test_ds.sample_id) == set(ds.sample_id)
+
+
+def test_group_cv_raises_when_n_repeats_invalid() -> None:
+    ds = make_dataset()
+    with pytest.raises(ValueError, match="n_repeats"):
+        GroupCV(
+            dataset=ds,
+            n_splits=4,
+            n_repeats=0,
+            show_progress=False,
+        )
 
 
 def test_loso_cv_yields_one_group_per_split() -> None:

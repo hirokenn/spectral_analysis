@@ -50,7 +50,7 @@ def test_train_cv_updates_oof_predictions() -> None:
     np.testing.assert_allclose(updated.oof_predictions, expected)
 
 
-def test_train_cv_uses_loso_by_default() -> None:
+def test_train_cv_uses_groupcv_by_default() -> None:
     ds = make_dataset(
         X=np.array([[0.0], [1.0], [2.0], [3.0]]),
         y=np.array([1.0, 2.0, 3.0, 4.0]),

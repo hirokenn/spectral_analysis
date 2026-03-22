@@ -3,9 +3,10 @@ from __future__ import annotations
 from typing import Any, Iterable, cast
 
 import mlflow  # type: ignore[import-untyped]
+import numpy as np
 
 from src.data.dataset import Dataset
-from src.data.group_cv import LOSOCV
+from src.data.group_cv import GroupCV
 from src.model.eval import OOFEvaluator
 from src.model.model_builder import ModelBuilder
 from src.model.plot import OOFPlotter
@@ -24,6 +25,15 @@ def _resolve_train_dataset(state: TrainState) -> Dataset:
     if state.dataset is not None:
         return state.dataset
     raise ValueError("train_dataset も dataset も設定されていません")
+
+
+def _default_group_cv(dataset: Dataset) -> GroupCV:
+    """ユニークグループ数が少ないときは ``n_splits`` を抑えた ``GroupCV`` を返す。"""
+    if dataset.groups is None:
+        raise ValueError("GroupCV には dataset.groups が必要です")
+    n_groups = int(np.unique(dataset.groups).size)
+    n_splits = min(5, n_groups)
+    return GroupCV(dataset=dataset, n_splits=n_splits)
 
 
 class TrainCV(BaseStep):
@@ -54,7 +64,7 @@ class TrainCV(BaseStep):
         recipe = self.recipe_builder.build(self.recipe_name)
         cv = cast(
             Iterable[tuple[Dataset, Dataset]],
-            kwargs.get("cv", LOSOCV(dataset=dataset)),
+            kwargs.get("cv", _default_group_cv(dataset)),
         )
         trainer = CVTrainer(
             cv=cv,
