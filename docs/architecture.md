@@ -287,5 +287,6 @@ CLI
 - `docs/design/recipe.md`
 - `docs/design/preprocess.md`
 - `docs/design/pipeline.md`
+- `docs/design/composable_learning_pipeline.md` - X 前処理・y 変換・データ拡張を統合する設計方針
 - `docs/data_info.md`
 - `docs/knowledge.md`
